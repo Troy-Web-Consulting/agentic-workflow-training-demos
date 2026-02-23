@@ -12,49 +12,53 @@ from typing import Any
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "Outputs")
 
+# Buffer for agent text output only (call save() to capture TextBlock content)
+_output_buf = io.StringIO()
 
-def run(title, coro, filename):
-    """Print a header, run an async main(), and save all output to Outputs/<filename>."""
+
+def save(text):
+    """Capture agent text to the output file (and print to console)."""
+    print(text)
+    _output_buf.write(text)
+
+
+def run(title, coro, filename, subtitle=None):
+    """Print a header, run an async main(), and save agent output to Outputs/<filename>."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    buf = io.StringIO()
-    original = sys.stdout
-    sys.stdout = type("Tee", (), {
-        "write": lambda _, s: (original.write(s), buf.write(s)),
-        "flush": lambda _: (original.flush(), buf.flush()),
-    })()
-    try:
-        print("=" * 60)
-        print(title)
-        print("=" * 60)
-        asyncio.run(coro)
-    finally:
-        sys.stdout = original
+    _output_buf.truncate(0)
+    _output_buf.seek(0)
+
+    print("=" * 60)
+    print(title)
+    if subtitle:
+        print(f"  What's New: {subtitle}")
+    print("=" * 60)
+
+    asyncio.run(coro)
+
     with open(os.path.join(OUTPUT_DIR, filename), "w", encoding="utf-8") as f:
-        f.write(buf.getvalue())
+        f.write(_output_buf.getvalue())
 
 
 # ── The messy human request our agents will process ────────
 
 TRAVEL_REQUEST = """
-hey so me and my wife have been talking and we really want to do something
-for our anniversary in October, maybe like 5-6 days? We're both super into
-food and history but she HATES super touristy stuff and big crowds. We were
-thinking maybe somewhere in Europe but honestly open to ideas. We've already
-done Paris and London so not those.
+hey so me and my friend want to plan a trip in October,
+maybe 5-6 days? We love food and history but hate touristy crowds. Thinking
+Europe but open to ideas — already done Paris and London.
 
-Budget-wise we could probably swing like $5,000-$7,000 for the whole trip
-not counting flights? We'd want a nice hotel, nothing crazy but not a hostel
-lol. Oh and she's vegetarian if that matters for the food scene.
+Budget: $5,000-$7,000 (not counting flights). Nice hotel but nothing crazy.
+He's vegetarian. And I get motion sick on boats so no cruises!
 
-Also I get motion sick on boats so probably no cruises or island hopping haha.
-
-Anyway let me know what you think!!
+Let me know what you think!
 """
 
 SYSTEM_PROMPT = (
     "You are a travel planning specialist. "
     "Analyze travel requests and recommend destinations. "
-    "Be concise and professional."
+    "Be concise and professional. Keep responses short — "
+    "use bullet points over paragraphs, skip filler, "
+    "and aim for under 300 words."
 )
 
 
@@ -75,18 +79,18 @@ DESTINATIONS = {
         "motion_sick_risk": "Low -- walkable city, no boats required",
         "insider_tip": "Port wine tasting at Graham's Lodge -- best views at sunset",
     },
-    "bologna": {
-        "city": "Bologna",
-        "country": "Italy",
-        "best_months": ["September", "October", "April", "May"],
-        "avg_daily_cost_usd": 170,
-        "avg_hotel_per_night_usd": 200,
-        "crowd_level": "Low -- locals outnumber tourists, authentic experience",
-        "food_scene": "Food capital of Italy. Excellent vegetarian pasta and gelato tradition",
-        "history_highlights": ["Two Towers", "Oldest university in the world (1088)", "Piazza Maggiore"],
-        "vegetarian_friendly": 4.5,
-        "motion_sick_risk": "Low -- flat, very walkable",
-        "insider_tip": "Day trip to Ravenna (1hr train) for Byzantine mosaics",
+    "lisbon": {
+        "city": "Lisbon",
+        "country": "Portugal",
+        "best_months": ["September", "October", "March", "April"],
+        "avg_daily_cost_usd": 130,
+        "avg_hotel_per_night_usd": 150,
+        "crowd_level": "Moderate-High in Alfama/Belém, but many quiet neighborhoods",
+        "food_scene": "Booming vegetarian scene -- 30+ dedicated restaurants. Incredible pastéis de nata and petiscos culture",
+        "history_highlights": ["Belém Tower (UNESCO)", "Jerónimos Monastery", "São Jorge Castle", "Alfama district"],
+        "vegetarian_friendly": 4.3,
+        "motion_sick_risk": "Low -- trams and walkable, no boats needed",
+        "insider_tip": "Skip Belém at weekends. LX Factory for creative food scene, Mouraria for authentic local dining",
     },
     "kyoto": {
         "city": "Kyoto",
@@ -125,5 +129,3 @@ async def lookup_destination(args: dict[str, Any]) -> dict[str, Any]:
     return {
         "content": [{"type": "text", "text": json.dumps({"error": "City not found"})}]
     }
-
-

@@ -5,45 +5,52 @@
 from claude_agent_sdk import (
     ClaudeAgentOptions,
     ClaudeSDKClient,
+    create_sdk_mcp_server,
     AssistantMessage,
     TextBlock,
     ToolUseBlock,
     ResultMessage,
 )
-from claude_agent_sdk import create_sdk_mcp_server
-from travel_request import TRAVEL_REQUEST, SYSTEM_PROMPT, lookup_destination, run
+from travel_request import TRAVEL_REQUEST, SYSTEM_PROMPT, lookup_destination, run, save
 
 
-def create_destination_server():
-    return create_sdk_mcp_server(name="travel_db", tools=[lookup_destination])
+# ── NEW: Tool instructions ──────────────────────────────
+
+TOOL_INSTRUCTIONS = (
+    " ALWAYS use the lookup_destination tool to research cities "
+    "before making recommendations. Look up 2-3 cities, then give "
+    "a structured trip brief with your top pick."
+)
 
 
 async def main():
-    destination_server = create_destination_server()
+    # ── NEW: Wrap our tool in an MCP server ──
+    destination_server = create_sdk_mcp_server(name="travel_db", tools=[lookup_destination])
 
+    # ── NEW: MCP server gives the agent a callable tool ──
     options = ClaudeAgentOptions(
-        system_prompt=SYSTEM_PROMPT + (
-            " ALWAYS use the lookup_destination tool to research cities "
-            "before making recommendations. Look up 2-3 cities, then give "
-            "a structured trip brief with your top pick."
-        ),
+        system_prompt=SYSTEM_PROMPT + TOOL_INSTRUCTIONS,
         mcp_servers={"travel_db": destination_server},
         allowed_tools=["mcp__travel_db__lookup_destination"],
         permission_mode="bypassPermissions",
-        max_turns=5,
     )
 
     async with ClaudeSDKClient(options=options) as client:
         await client.query(TRAVEL_REQUEST)
-        async for message in client.receive_response():
-            if isinstance(message, AssistantMessage):
-                for block in message.content:
+        async for msg in client.receive_response():
+            if isinstance(msg, AssistantMessage):
+                for block in msg.content:
                     if isinstance(block, TextBlock):
-                        print(block.text)
+                        save(block.text)
                     elif isinstance(block, ToolUseBlock):
-                        print(f"\n  >> Tool call: lookup_destination({block.input})\n")
-            elif isinstance(message, ResultMessage):
-                print(f"\nCost: ${message.total_cost_usd:.4f} | Turns: {message.num_turns}")
+                        print(f"\n  ── Tool: {block.name}({block.input}) ──\n")
+            elif isinstance(msg, ResultMessage):
+                print(f"\n── Cost: ${msg.total_cost_usd:.4f} ──")
 
 
-run("STEP 2: Single Agent + Destination Lookup Tool", main(), "step2_output.md")
+run(
+    "STEP 2: Single Agent + Destination Lookup Tool",
+    main(),
+    "step2_output.md",
+    subtitle="Adding a tool — the agent can now look up real destination data",
+)
