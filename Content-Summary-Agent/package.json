@@ -1,0 +1,23 @@
+{
+  "name": "content-summary-agent",
+  "type": "module",
+  "scripts": {
+    "step1": "npx tsx phase1/step1_content_reader.ts",
+    "step2": "npx tsx phase1/step2_analyzer.ts",
+    "step3": "npx tsx phase1/step3_pipeline.ts",
+    "step4": "npx tsx phase2/step4_with_webhook.ts",
+    "step5": "npx tsx phase3/step5_sanitization.ts",
+    "step6": "npx tsx phase3/step6_error_handling.ts",
+    "step7": "npx tsx phase3/step7_logging.ts",
+    "step8": "npx tsx phase3/step8_cost_controls.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.74",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
