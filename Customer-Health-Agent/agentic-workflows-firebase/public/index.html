@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Health Score Agent - Agentic Workflow Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 40px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(45, 45, 45, 0.5);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .legend-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .legend-item.active {
+            transform: scale(1.05);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Workflow Diagram */
+        .workflow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            position: relative;
+            padding-left: 100px;
+            padding-right: 100px;
+        }
+
+        /* Feedback Loop Arrows - L-shaped with curved corners */
+        .feedback-loop-arrow {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Iterative Refinement -> Planning Loop (left side) */
+        .feedback-loop-refinement {
+            left: -32px;
+        }
+
+        .feedback-loop-refinement .loop-path {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .feedback-loop-refinement .loop-path svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .feedback-loop-refinement .loop-label {
+            position: absolute;
+            right: -33px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            white-space: nowrap;
+            color: #F1C40F;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(26,26,46,0.95);
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 2px solid #F1C40F;
+        }
+
+        /* Reflection -> Synthesis Loop (right side) */
+        .feedback-loop-reflection {
+            right: -32px;
+        }
+
+        .feedback-loop-reflection .loop-path {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .feedback-loop-reflection .loop-path svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .feedback-loop-reflection .loop-label {
+            position: absolute;
+            left: -19px;
+            top: 50%;
+            transform: translateY(-50%) rotate(90deg);
+            white-space: nowrap;
+            color: #1ABC9C;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(26,26,46,0.95);
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 2px solid #1ABC9C;
+        }
+
+        .phase {
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .phase:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .phase.highlighted {
+            box-shadow: 0 0 30px currentColor;
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .phase-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .phase-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .phase-content {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        /* Phase-specific colors */
+        .phase-trigger {
+            background: linear-gradient(135deg, rgba(85,85,85,0.3) 0%, rgba(50,50,50,0.3) 100%);
+            border: 2px solid #555;
+        }
+        .phase-trigger .phase-number { background: #555; color: #fff; }
+
+        .phase-planning {
+            background: linear-gradient(135deg, rgba(74,144,217,0.2) 0%, rgba(58,128,201,0.2) 100%);
+            border: 2px solid #4A90D9;
+            color: #4A90D9;
+        }
+        .phase-planning .phase-number { background: #4A90D9; color: #fff; }
+
+        .phase-agents {
+            background: linear-gradient(135deg, rgba(80,200,120,0.2) 0%, rgba(64,184,104,0.2) 100%);
+            border: 2px solid #50C878;
+            color: #50C878;
+        }
+        .phase-agents .phase-number { background: #50C878; color: #fff; }
+
+        .phase-tools {
+            background: linear-gradient(135deg, rgba(245,166,35,0.2) 0%, rgba(229,150,19,0.2) 100%);
+            border: 2px solid #F5A623;
+            color: #F5A623;
+        }
+        .phase-tools .phase-number { background: #F5A623; color: #000; }
+
+        .phase-synthesis {
+            background: linear-gradient(135deg, rgba(155,89,182,0.2) 0%, rgba(139,73,166,0.2) 100%);
+            border: 2px solid #9B59B6;
+            color: #9B59B6;
+        }
+        .phase-synthesis .phase-number { background: #9B59B6; color: #fff; }
+
+        .phase-reflection {
+            background: linear-gradient(135deg, rgba(26,188,156,0.2) 0%, rgba(10,172,140,0.2) 100%);
+            border: 2px solid #1ABC9C;
+            color: #1ABC9C;
+        }
+        .phase-reflection .phase-number { background: #1ABC9C; color: #fff; }
+
+        .phase-routing {
+            background: linear-gradient(135deg, rgba(231,76,60,0.2) 0%, rgba(215,60,44,0.2) 100%);
+            border: 2px solid #E74C3C;
+            color: #E74C3C;
+        }
+        .phase-routing .phase-number { background: #E74C3C; color: #fff; }
+
+        .phase-refinement {
+            background: linear-gradient(135deg, rgba(241,196,15,0.2) 0%, rgba(225,180,0,0.2) 100%);
+            border: 2px solid #F1C40F;
+            color: #F1C40F;
+        }
+        .phase-refinement .phase-number { background: #F1C40F; color: #000; }
+
+        /* Large Flow Arrows */
+        .flow-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 0;
+            position: relative;
+        }
+
+        .flow-arrow .arrow-line {
+            width: 4px;
+            height: 40px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.6));
+            border-radius: 2px;
+        }
+
+        .flow-arrow .arrow-head {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 16px solid rgba(255,255,255,0.6);
+        }
+
+        .flow-arrow .arrow-label {
+            position: absolute;
+            right: calc(50% + 30px);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: #666;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Colored arrows based on source phase */
+        .flow-arrow.from-trigger .arrow-line { background: linear-gradient(to bottom, #555, #4A90D9); }
+        .flow-arrow.from-trigger .arrow-head { border-top-color: #4A90D9; }
+
+        .flow-arrow.from-planning .arrow-line { background: linear-gradient(to bottom, #4A90D9, #50C878); }
+        .flow-arrow.from-planning .arrow-head { border-top-color: #50C878; }
+
+        .flow-arrow.from-agents .arrow-line { background: linear-gradient(to bottom, #50C878, #F5A623); }
+        .flow-arrow.from-agents .arrow-head { border-top-color: #F5A623; }
+
+        .flow-arrow.from-tools .arrow-line { background: linear-gradient(to bottom, #F5A623, #9B59B6); }
+        .flow-arrow.from-tools .arrow-head { border-top-color: #9B59B6; }
+
+        .flow-arrow.from-synthesis .arrow-line { background: linear-gradient(to bottom, #9B59B6, #1ABC9C); }
+        .flow-arrow.from-synthesis .arrow-head { border-top-color: #1ABC9C; }
+
+        .flow-arrow.from-reflection .arrow-line { background: linear-gradient(to bottom, #1ABC9C, #E74C3C); }
+        .flow-arrow.from-reflection .arrow-head { border-top-color: #E74C3C; }
+
+        .flow-arrow.from-routing .arrow-line { background: linear-gradient(to bottom, #E74C3C, #F1C40F); }
+        .flow-arrow.from-routing .arrow-head { border-top-color: #F1C40F; }
+
+        /* Agent cards */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .agent-card {
+            background: rgba(80,200,120,0.3);
+            border: 1px solid #50C878;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .agent-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(80,200,120,0.3);
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        .agent-api {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .agent-metrics {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* Decision items */
+        .decision-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .decision-item {
+            background: rgba(245,166,35,0.3);
+            border: 1px solid #F5A623;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        /* Validation checks */
+        .validation-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .validation-check {
+            background: rgba(26,188,156,0.3);
+            border: 1px solid #1ABC9C;
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Risk routing */
+        .risk-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .risk-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .risk-critical {
+            background: rgba(142,68,173,0.3);
+            border: 1px solid #8E44AD;
+        }
+
+        .risk-high {
+            background: rgba(192,57,43,0.3);
+            border: 1px solid #C0392B;
+        }
+
+        .risk-medium {
+            background: rgba(230,126,34,0.3);
+            border: 1px solid #E67E22;
+        }
+
+        .risk-low {
+            background: rgba(39,174,96,0.3);
+            border: 1px solid #27AE60;
+        }
+
+        .risk-level {
+            font-weight: bold;
+            min-width: 100px;
+        }
+
+        .risk-action {
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        /* Sub-tasks list */
+        .subtasks-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .subtasks-list li {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .subtasks-list li:last-child {
+            border-bottom: none;
+        }
+
+        .subtasks-list li::before {
+            content: attr(data-num) ". ";
+            color: #4A90D9;
+            font-weight: bold;
+        }
+
+        /* Learning items */
+        .learning-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .learning-list li {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: #ccc;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .learning-list li::before {
+            content: ">";
+            color: #F1C40F;
+        }
+
+        /* Sample Report */
+        .sample-report {
+            background: #1E1E2E;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid #444;
+        }
+
+        .report-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .company-info h3 {
+            color: #fff;
+            font-size: 1.3rem;
+        }
+
+        .company-meta {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .health-score {
+            text-align: center;
+            padding: 15px 25px;
+            background: rgba(231,76,60,0.2);
+            border: 2px solid #E74C3C;
+            border-radius: 10px;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #E74C3C;
+        }
+
+        .score-label {
+            color: #E74C3C;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .report-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .report-section {
+            background: rgba(45,45,61,0.5);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .report-section h4 {
+            color: #fff;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #444;
+        }
+
+        .signal-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .signal-list li {
+            padding: 5px 0;
+            font-size: 0.85rem;
+        }
+
+        .signal-red { color: #E74C3C; }
+        .signal-yellow { color: #F1C40F; }
+        .signal-green { color: #50C878; }
+
+        .validation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .validation-list li {
+            padding: 5px 0;
+            font-size: 0.85rem;
+            color: #1ABC9C;
+        }
+
+        .actions-list {
+            list-style: none;
+            padding: 0;
+            counter-reset: action-counter;
+        }
+
+        .actions-list li {
+            padding: 6px 0;
+            font-size: 0.85rem;
+            color: #ccc;
+            counter-increment: action-counter;
+        }
+
+        .actions-list li::before {
+            content: counter(action-counter) ". ";
+            color: #E74C3C;
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #1E1E2E;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 95%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-section p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        /* Feedback loop indicator */
+        .feedback-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(241,196,15,0.1);
+            border: 1px dashed #F1C40F;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .feedback-indicator .loop-arrow {
+            font-size: 1.5rem;
+            color: #F1C40F;
+        }
+
+        .feedback-indicator span {
+            color: #F1C40F;
+            font-size: 0.9rem;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .example-card {
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .example-card.example-critical {
+            background: linear-gradient(135deg, rgba(142,68,173,0.2) 0%, rgba(192,57,43,0.2) 100%);
+            border: 2px solid #8E44AD;
+        }
+
+        .example-card.example-high {
+            background: linear-gradient(135deg, rgba(192,57,43,0.2) 0%, rgba(231,76,60,0.2) 100%);
+            border: 2px solid #E74C3C;
+        }
+
+        .example-card.example-medium {
+            background: linear-gradient(135deg, rgba(230,126,34,0.2) 0%, rgba(241,196,15,0.2) 100%);
+            border: 2px solid #E67E22;
+        }
+
+        .example-card.example-low {
+            background: linear-gradient(135deg, rgba(39,174,96,0.2) 0%, rgba(46,204,113,0.2) 100%);
+            border: 2px solid #27AE60;
+        }
+
+        .example-score-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .example-score-badge.critical { background: #8E44AD; }
+        .example-score-badge.high { background: #E74C3C; }
+        .example-score-badge.medium { background: #E67E22; }
+        .example-score-badge.low { background: #27AE60; }
+
+        .example-content h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            padding-right: 60px;
+        }
+
+        .example-type {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .example-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .example-status.critical { background: rgba(142,68,173,0.3); color: #8E44AD; }
+        .example-status.high { background: rgba(231,76,60,0.3); color: #E74C3C; }
+        .example-status.medium { background: rgba(230,126,34,0.3); color: #E67E22; }
+        .example-status.low { background: rgba(39,174,96,0.3); color: #27AE60; }
+
+        .example-summary {
+            color: #aaa;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Report Modal Styles */
+        .report-modal {
+            max-width: 900px;
+            width: 95%;
+        }
+
+        .report-modal .modal-body {
+            padding: 0;
+        }
+
+        .report-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .company-info h3 {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .company-meta {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .company-metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .meta-item {
+            font-size: 0.85rem;
+        }
+
+        .meta-label {
+            color: #888;
+        }
+
+        .meta-value {
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .meta-value.meta-warning {
+            color: #E74C3C;
+            font-weight: 600;
+        }
+
+        .health-score {
+            text-align: center;
+            padding: 15px 25px;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+
+        .health-score.critical {
+            background: rgba(142,68,173,0.2);
+            border: 2px solid #8E44AD;
+        }
+        .health-score.critical .score-value,
+        .health-score.critical .score-label { color: #8E44AD; }
+
+        .health-score.high {
+            background: rgba(231,76,60,0.2);
+            border: 2px solid #E74C3C;
+        }
+        .health-score.high .score-value,
+        .health-score.high .score-label { color: #E74C3C; }
+
+        .health-score.medium {
+            background: rgba(230,126,34,0.2);
+            border: 2px solid #E67E22;
+        }
+        .health-score.medium .score-value,
+        .health-score.medium .score-label { color: #E67E22; }
+
+        .health-score.low {
+            background: rgba(39,174,96,0.2);
+            border: 2px solid #27AE60;
+        }
+        .health-score.low .score-value,
+        .health-score.low .score-label { color: #27AE60; }
+
+        .score-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+        }
+
+        .score-value span {
+            font-size: 1rem;
+            color: #888;
+        }
+
+        .score-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .report-body {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 20px;
+            padding: 25px;
+        }
+
+        .report-section {
+            background: rgba(45,45,61,0.5);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .report-section h4 {
+            color: #fff;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #444;
+        }
+
+        .report-section.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .signal-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .signal-list li {
+            padding: 6px 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .signal-red { color: #E74C3C; }
+        .signal-yellow { color: #F1C40F; }
+        .signal-green { color: #50C878; }
+
+        .validation-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .validation-list li {
+            padding: 6px 0;
+            font-size: 0.9rem;
+            color: #1ABC9C;
+        }
+
+        .actions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            counter-reset: action-counter;
+        }
+
+        .actions-list li {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: #ccc;
+            counter-increment: action-counter;
+            line-height: 1.4;
+        }
+
+        .actions-list li::before {
+            content: counter(action-counter) ". ";
+            font-weight: bold;
+        }
+
+        .actions-list.critical li::before { color: #8E44AD; }
+        .actions-list.high li::before { color: #E74C3C; }
+        .actions-list.medium li::before { color: #E67E22; }
+        .actions-list.low li::before { color: #27AE60; }
+
+        .routing-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .routing-tag {
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .routing-tag.critical {
+            background: rgba(142,68,173,0.3);
+            border: 1px solid #8E44AD;
+            color: #ccc;
+        }
+
+        .routing-tag.high {
+            background: rgba(231,76,60,0.3);
+            border: 1px solid #E74C3C;
+            color: #ccc;
+        }
+
+        .routing-tag.medium {
+            background: rgba(230,126,34,0.3);
+            border: 1px solid #E67E22;
+            color: #ccc;
+        }
+
+        .routing-tag.low {
+            background: rgba(39,174,96,0.3);
+            border: 1px solid #27AE60;
+            color: #ccc;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .legend {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .report-body {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Customer Health Score Agent</h1>
+            <p class="subtitle">Demonstrating 7 Key Agentic Workflow Concepts in a Real-World Application</p>
+        </header>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item" data-concept="1" onclick="highlightConcept(1)">
+                <div class="legend-color" style="background: #4A90D9;"></div>
+                <span class="legend-text">1. Planning & Decomposition</span>
+            </div>
+            <div class="legend-item" data-concept="2" onclick="highlightConcept(2)">
+                <div class="legend-color" style="background: #50C878;"></div>
+                <span class="legend-text">2. Multi-Agent Collaboration</span>
+            </div>
+            <div class="legend-item" data-concept="3" onclick="highlightConcept(3)">
+                <div class="legend-color" style="background: #F5A623;"></div>
+                <span class="legend-text">3. Tool Selection Decisions</span>
+            </div>
+            <div class="legend-item" data-concept="4" onclick="highlightConcept(4)">
+                <div class="legend-color" style="background: #9B59B6;"></div>
+                <span class="legend-text">4. Research & Synthesis</span>
+            </div>
+            <div class="legend-item" data-concept="5" onclick="highlightConcept(5)">
+                <div class="legend-color" style="background: #1ABC9C;"></div>
+                <span class="legend-text">5. Reflection & Self-Critique</span>
+            </div>
+            <div class="legend-item" data-concept="6" onclick="highlightConcept(6)">
+                <div class="legend-color" style="background: #E74C3C;"></div>
+                <span class="legend-text">6. Decision Trees / Routing</span>
+            </div>
+            <div class="legend-item" data-concept="7" onclick="highlightConcept(7)">
+                <div class="legend-color" style="background: #F1C40F;"></div>
+                <span class="legend-text">7. Iterative Refinement</span>
+            </div>
+        </div>
+
+        <!-- Workflow Diagram - All Vertical -->
+        <div class="workflow">
+
+            <!-- Feedback Loop: Iterative Refinement -> Planning (Left Side) -->
+            <div class="feedback-loop-arrow feedback-loop-refinement" id="refinement-loop">
+                <div class="loop-path" id="refinement-path"></div>
+                <span class="loop-label">Continuous Learning</span>
+            </div>
+
+            <!-- Feedback Loop: Reflection -> Synthesis (Right Side) -->
+            <div class="feedback-loop-arrow feedback-loop-reflection" id="reflection-loop">
+                <div class="loop-path" id="reflection-path"></div>
+                <span class="loop-label">Validation Failed</span>
+            </div>
+
+            <!-- Phase 0: Trigger -->
+            <div class="phase phase-trigger" onclick="showModal('trigger')">
+                <div class="phase-header">
+                    <div class="phase-number">0</div>
+                    <span class="phase-title" style="color: #aaa;">TRIGGER</span>
+                </div>
+                <div class="phase-content">
+                    <p style="text-align: center; color: #888;">Weekly Scan or Real-time Event Detection</p>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-trigger">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 1: Planning & Decomposition -->
+            <div class="phase phase-planning" data-concept="1" onclick="showModal('planning')">
+                <div class="phase-header">
+                    <div class="phase-number">1</div>
+                    <span class="phase-title">PLANNING & DECOMPOSITION</span>
+                </div>
+                <div class="phase-content">
+                    <p style="font-weight: 600; margin-bottom: 10px; color: #fff;">Orchestrator Agent</p>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 10px;">Breaks "Assess customer health" into sub-tasks:</p>
+                    <ul class="subtasks-list">
+                        <li data-num="1">Query product metrics</li>
+                        <li data-num="2">Pull support history</li>
+                        <li data-num="3">Check billing status</li>
+                        <li data-num="4">Identify stakeholder changes</li>
+                        <li data-num="5">Analyze communications</li>
+                        <li data-num="6">Synthesize into score</li>
+                        <li data-num="7">Take appropriate action</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-planning">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 2: Multi-Agent Collaboration -->
+            <div class="phase phase-agents" data-concept="2" onclick="showModal('agents')">
+                <div class="phase-header">
+                    <div class="phase-number">2</div>
+                    <span class="phase-title">MULTI-AGENT COLLABORATION</span>
+                </div>
+                <div class="phase-content">
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">5 specialized agents work in parallel:</p>
+                    <div class="agents-grid">
+                        <div class="agent-card">
+                            <div class="agent-name">Product Agent</div>
+                            <div class="agent-api">Amplitude API</div>
+                            <div class="agent-metrics">Daily Active Users, Adoption, Activity</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">Support Agent</div>
+                            <div class="agent-api">Zendesk API</div>
+                            <div class="agent-metrics">Tickets, Sentiment</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">Billing Agent</div>
+                            <div class="agent-api">Stripe API</div>
+                            <div class="agent-metrics">Payments, Annual Revenue, Renewal</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">Contact Agent</div>
+                            <div class="agent-api">Salesforce API</div>
+                            <div class="agent-metrics">Account Manager, Stakeholders</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">Comms Agent</div>
+                            <div class="agent-api">Slack API</div>
+                            <div class="agent-metrics">Response Rate, Engagement</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-agents">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 3: Tool Selection Decisions -->
+            <div class="phase phase-tools" data-concept="3" onclick="showModal('tools')">
+                <div class="phase-header">
+                    <div class="phase-number">3</div>
+                    <span class="phase-title">TOOL SELECTION DECISIONS</span>
+                </div>
+                <div class="phase-content">
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">Conditional tool selection based on detected signals:</p>
+                    <div class="decision-grid">
+                        <div class="decision-item">Usage drop detected?<br><strong>> Query product analytics</strong></div>
+                        <div class="decision-item">Tickets spiking?<br><strong>> Query support system</strong></div>
+                        <div class="decision-item">Payment failed?<br><strong>> Check billing history</strong></div>
+                        <div class="decision-item">Account Manager left?<br><strong>> Query CRM for stakeholders</strong></div>
+                        <div class="decision-item">Low engagement?<br><strong>> Check Slack/Email activity</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-tools">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 4: Research & Synthesis -->
+            <div class="phase phase-synthesis" data-concept="4" onclick="showModal('synthesis')">
+                <div class="phase-header">
+                    <div class="phase-number">4</div>
+                    <span class="phase-title">RESEARCH & SYNTHESIS</span>
+                </div>
+                <div class="phase-content">
+                    <p style="font-weight: 600; margin-bottom: 10px; color: #fff;">Synthesis Agent</p>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">Combines findings from all sources into unified risk assessment:</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                            <strong style="color: #9B59B6;">Product:</strong> <span style="color: #ccc;">Daily Active Users -15%, Adoption 67%</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                            <strong style="color: #9B59B6;">Issues:</strong> <span style="color: #ccc;">3 tickets, Sentiment -0.4</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                            <strong style="color: #9B59B6;">Billing:</strong> <span style="color: #ccc;">$125K Annual Revenue, 45 days to renewal</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                            <strong style="color: #9B59B6;">Contact:</strong> <span style="color: #ccc;">Account Manager departed</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                            <strong style="color: #9B59B6;">Support:</strong> <span style="color: #ccc;">12 days no contact</span>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px; padding: 10px; background: rgba(155,89,182,0.3); border-radius: 8px;">
+                        <span style="color: #aaa;">Initial Risk Score:</span>
+                        <span style="font-size: 1.5rem; font-weight: bold; color: #E74C3C; margin-left: 10px;">34/100</span>
+                        <span style="color: #E74C3C; margin-left: 5px;">(HIGH RISK)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-synthesis">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 5: Reflection & Self-Critique -->
+            <div class="phase phase-reflection" data-concept="5" onclick="showModal('reflection')">
+                <div class="phase-header">
+                    <div class="phase-number">5</div>
+                    <span class="phase-title">REFLECTION & SELF-CRITIQUE</span>
+                </div>
+                <div class="phase-content">
+                    <p style="font-style: italic; color: #1ABC9C; margin-bottom: 12px;">"Am I sure? What could I be wrong about?"</p>
+                    <div class="validation-grid">
+                        <div class="validation-check">
+                            <span class="check-icon">&#10003;</span>
+                            <div>
+                                <strong>Data Complete?</strong>
+                                <p style="font-size: 0.8rem; color: #888;">All sources returned data</p>
+                            </div>
+                        </div>
+                        <div class="validation-check">
+                            <span class="check-icon">&#10003;</span>
+                            <div>
+                                <strong>No Contradictions?</strong>
+                                <p style="font-size: 0.8rem; color: #888;">Signals are consistent</p>
+                            </div>
+                        </div>
+                        <div class="validation-check">
+                            <span class="check-icon">&#10003;</span>
+                            <div>
+                                <strong>Context Valid?</strong>
+                                <p style="font-size: 0.8rem; color: #888;">Not migration/holiday/etc.</p>
+                            </div>
+                        </div>
+                        <div class="validation-check">
+                            <span class="check-icon">&#10003;</span>
+                            <div>
+                                <strong>High Confidence?</strong>
+                                <p style="font-size: 0.8rem; color: #888;">Score is reliable</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 10px; background: rgba(26,188,156,0.1); border: 1px dashed #1ABC9C; border-radius: 6px; text-align: center;">
+                        <span style="color: #1ABC9C; font-size: 0.85rem;">&#8634; If validation fails, loop back to Research & Synthesis</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-reflection">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 6: Decision Trees / Routing -->
+            <div class="phase phase-routing" data-concept="6" onclick="showModal('routing')">
+                <div class="phase-header">
+                    <div class="phase-number">6</div>
+                    <span class="phase-title">DECISION TREES / ROUTING</span>
+                </div>
+                <div class="phase-content">
+                    <div class="risk-grid">
+                        <div class="risk-item risk-critical">
+                            <span class="risk-level" style="color: #8E44AD;">CRITICAL RISK<br><small>Score &lt; 25%</small></span>
+                            <span class="risk-action">> URGENT: Executive escalation required<br>> Slack #cs-critical-accounts<br>> Alert Director of BD + Manager + President + Finance</span>
+                        </div>
+                        <div class="risk-item risk-high">
+                            <span class="risk-level" style="color: #E74C3C;">HIGH RISK<br><small>Score 25-49%</small></span>
+                            <span class="risk-action">> Immediate escalation to Director of Business Development<br>> Slack #cs-critical-accounts<br>> Alert Director of BD + Manager + President</span>
+                        </div>
+                        <div class="risk-item risk-medium">
+                            <span class="risk-level" style="color: #F5A623;">MEDIUM RISK<br><small>Score 50-79%</small></span>
+                            <span class="risk-action">> Queue for weekly review<br>> Notify Director of Business Development<br>> Monitor for changes</span>
+                        </div>
+                        <div class="risk-item risk-low">
+                            <span class="risk-level" style="color: #27AE60;">LOW RISK<br><small>Score 80%+</small></span>
+                            <span class="risk-action">> Slack #cs-expansion-opps<br>> Consider for advocacy program<br>> Re-check in 30 days</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <p style="font-size: 0.85rem; color: #aaa;"><strong>Secondary Routing by Issue Type:</strong></p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                            <span style="padding: 5px 10px; background: rgba(231,76,60,0.2); border-radius: 4px; font-size: 0.8rem;">Billing > Finance Team</span>
+                            <span style="padding: 5px 10px; background: rgba(231,76,60,0.2); border-radius: 4px; font-size: 0.8rem;">Product Friction > Product Team</span>
+                            <span style="padding: 5px 10px; background: rgba(231,76,60,0.2); border-radius: 4px; font-size: 0.8rem;">Support Issues > Account Management Lead</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flow-arrow from-routing">
+                <div class="arrow-line"></div>
+                <div class="arrow-head"></div>
+            </div>
+
+            <!-- Phase 7: Iterative Refinement -->
+            <div class="phase phase-refinement" data-concept="7" onclick="showModal('refinement')">
+                <div class="phase-header">
+                    <div class="phase-number">7</div>
+                    <span class="phase-title">ITERATIVE REFINEMENT</span>
+                </div>
+                <div class="phase-content">
+                    <p style="font-weight: 600; margin-bottom: 10px; color: #fff;">Feedback Loop - Learning Over Time</p>
+                    <ul class="learning-list">
+                        <li>Track which flagged accounts actually churned</li>
+                        <li>Compare predictions vs. actual outcomes</li>
+                        <li>Refine risk weightings based on data</li>
+                        <li>Incorporate Account Managers feedback on assessments</li>
+                        <li>Adjust thresholds based on false positives/negatives</li>
+                    </ul>
+                    <div class="feedback-indicator">
+                        <span class="loop-arrow">&#8634;</span>
+                        <span>Learning improves future assessments - feeds back into Planning & Decomposition</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Examples Section -->
+        <div class="examples-section">
+            <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.4rem;">Example Reports</h2>
+            <p style="color: #888; margin-bottom: 20px;">Click on any example to view the full Customer Health Assessment Report</p>
+
+            <div class="examples-grid">
+                <!-- High Risk Example -->
+                <div class="example-card example-high" onclick="showReportModal('techcorp')">
+                    <div class="example-score-badge high">34</div>
+                    <div class="example-content">
+                        <h3>TechCorp Industries</h3>
+                        <p class="example-type">Enterprise Customer</p>
+                        <div class="example-status high">HIGH RISK</div>
+                        <p class="example-summary">Account Manager departed, usage declining, multiple support tickets</p>
+                    </div>
+                </div>
+
+                <!-- Medium Risk Example -->
+                <div class="example-card example-medium" onclick="showReportModal('acme')">
+                    <div class="example-score-badge medium">62</div>
+                    <div class="example-content">
+                        <h3>Acme Corporation</h3>
+                        <p class="example-type">Mid-Market Customer</p>
+                        <div class="example-status medium">MEDIUM RISK</div>
+                        <p class="example-summary">Renewal approaching, moderate engagement decline</p>
+                    </div>
+                </div>
+
+                <!-- Low Risk Example -->
+                <div class="example-card example-low" onclick="showReportModal('globaltech')">
+                    <div class="example-score-badge low">92</div>
+                    <div class="example-content">
+                        <h3>GlobalTech Solutions</h3>
+                        <p class="example-type">Enterprise Customer</p>
+                        <div class="example-status low">LOW RISK</div>
+                        <p class="example-summary">Strong engagement, expansion opportunity identified</p>
+                    </div>
+                </div>
+
+                <!-- Critical Risk Example -->
+                <div class="example-card example-critical" onclick="showReportModal('startupxyz')">
+                    <div class="example-score-badge critical">18</div>
+                    <div class="example-content">
+                        <h3>StartupXYZ Inc</h3>
+                        <p class="example-type">Small/Medium Business</p>
+                        <div class="example-status critical">CRITICAL RISK</div>
+                        <p class="example-summary">Payment failed, zero activity, super-connector left</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modal-title">Concept Title</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content inserted dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Report data for example modals
+        const reportData = {
+            techcorp: {
+                company: "TechCorp Industries",
+                type: "Enterprise Customer",
+                lastContact: "12 days ago",
+                score: 34,
+                riskLevel: "high",
+                riskLabel: "HIGH RISK",
+                metadata: {
+                    annualRevenue: "$125,000",
+                    customerSince: "March 2022",
+                    industry: "Technology / SaaS",
+                    totalUsers: "450 seats",
+                    renewalDate: "45 days"
+                },
+                signals: [
+                    { type: "red", text: "Product: Daily Active Users dropped 15% (30-day trend)" },
+                    { type: "yellow", text: "Issues: 3 open tickets (1 critical)" },
+                    { type: "green", text: "Billing: No issues" },
+                    { type: "red", text: "Contact: Account Manager departed (Sarah Chen)" },
+                    { type: "yellow", text: "Support: 12 days since last contact" }
+                ],
+                validation: [
+                    "Data Complete",
+                    "No Contradictions",
+                    "Context Valid",
+                    "High Confidence"
+                ],
+                actions: [
+                    "Immediate Director of Business Development outreach to identify new account manager",
+                    "Product team review of feature adoption blockers",
+                    "Escalate to Director of Operations for intervention planning"
+                ],
+                routing: [
+                    { text: "Routed to: #cs-critical-accounts" },
+                    { text: "Alerting: @director-bd @manager @president" }
+                ]
+            },
+            acme: {
+                company: "Acme Corporation",
+                type: "Mid-Market Customer",
+                lastContact: "5 days ago",
+                score: 62,
+                riskLevel: "medium",
+                riskLabel: "MEDIUM RISK",
+                metadata: {
+                    annualRevenue: "$48,000",
+                    customerSince: "January 2023",
+                    industry: "Manufacturing",
+                    totalUsers: "85 seats",
+                    renewalDate: "30 days"
+                },
+                signals: [
+                    { type: "yellow", text: "Product: Feature adoption at 45% (below 60% target)" },
+                    { type: "green", text: "Issues: No open tickets" },
+                    { type: "yellow", text: "Billing: Renewal in 30 days - no discussion yet" },
+                    { type: "green", text: "Contact: Account Manager engaged" },
+                    { type: "yellow", text: "Support: Email response rate dropped to 60%" }
+                ],
+                validation: [
+                    "Data Complete",
+                    "No Contradictions",
+                    "Context Valid",
+                    "High Confidence"
+                ],
+                actions: [
+                    "Schedule renewal discussion this week",
+                    "Send feature adoption guide and training resources",
+                    "Add to weekly review list for monitoring"
+                ],
+                routing: [
+                    { text: "Routed to: Weekly Review Queue" },
+                    { text: "Notify: @director-bd" }
+                ]
+            },
+            globaltech: {
+                company: "GlobalTech Solutions",
+                type: "Enterprise Customer",
+                lastContact: "2 days ago",
+                score: 92,
+                riskLevel: "low",
+                riskLabel: "LOW RISK",
+                metadata: {
+                    annualRevenue: "$275,000",
+                    customerSince: "June 2021",
+                    industry: "Financial Services",
+                    totalUsers: "1,200 seats",
+                    renewalDate: "180 days"
+                },
+                signals: [
+                    { type: "green", text: "Product: Daily Active Users increased 25%, adoption at 89%" },
+                    { type: "green", text: "Issues: No open tickets" },
+                    { type: "green", text: "Billing: No issues, requested expansion pricing" },
+                    { type: "green", text: "Contact: Super-connector highly engaged" },
+                    { type: "green", text: "Support: Highly responsive, NPS score 9" }
+                ],
+                validation: [
+                    "Data Complete",
+                    "No Contradictions",
+                    "Context Valid",
+                    "High Confidence"
+                ],
+                actions: [
+                    "Prepare expansion proposal for 50 additional seats",
+                    "Nominate for customer advocacy program",
+                    "Schedule quarterly business review to discuss growth"
+                ],
+                routing: [
+                    { text: "Routed to: #cs-expansion-opps" },
+                    { text: "Flag: Expansion Opportunity" }
+                ]
+            },
+            startupxyz: {
+                company: "StartupXYZ Inc",
+                type: "Small/Medium Business Customer",
+                lastContact: "45 days ago",
+                score: 18,
+                riskLevel: "critical",
+                riskLabel: "CRITICAL RISK",
+                metadata: {
+                    annualRevenue: "$12,000",
+                    customerSince: "August 2023",
+                    industry: "Technology Startup",
+                    totalUsers: "25 seats",
+                    renewalDate: "15 days (OVERDUE)"
+                },
+                signals: [
+                    { type: "red", text: "Product: Zero user logins in past 21 days" },
+                    { type: "yellow", text: "Issues: No recent tickets (inactive account)" },
+                    { type: "red", text: "Billing: Payment failed 3 times, signs of financial distress" },
+                    { type: "red", text: "Contact: Super-connector (CEO) left company" },
+                    { type: "red", text: "Support: 5 unanswered outreach attempts" }
+                ],
+                validation: [
+                    "Data Complete",
+                    "No Contradictions",
+                    "Context Valid",
+                    "High Confidence"
+                ],
+                actions: [
+                    "URGENT: Executive escalation required",
+                    "Attempt contact via all available channels",
+                    "Prepare churn mitigation options (discount, pause)",
+                    "Document for potential write-off if unresponsive"
+                ],
+                routing: [
+                    { text: "Routed to: #cs-critical-accounts" },
+                    { text: "Alerting: @director-bd @manager @president @finance" }
+                ]
+            }
+        };
+
+        // Show report modal
+        function showReportModal(reportKey) {
+            const report = reportData[reportKey];
+            if (!report) return;
+
+            const modalHTML = `
+                <div class="report-header-section">
+                    <div class="company-info">
+                        <h3>${report.company}</h3>
+                        <p class="company-meta">${report.type} | Last Contact: ${report.lastContact}</p>
+                        <div class="company-metadata">
+                            <div class="meta-item"><span class="meta-label">Annual Revenue:</span> <span class="meta-value">${report.metadata.annualRevenue}</span></div>
+                            <div class="meta-item"><span class="meta-label">Customer Since:</span> <span class="meta-value">${report.metadata.customerSince}</span></div>
+                            <div class="meta-item"><span class="meta-label">Industry:</span> <span class="meta-value">${report.metadata.industry}</span></div>
+                            <div class="meta-item"><span class="meta-label">Total Users:</span> <span class="meta-value">${report.metadata.totalUsers}</span></div>
+                            <div class="meta-item"><span class="meta-label">Renewal In:</span> <span class="meta-value ${report.metadata.renewalDate.includes('OVERDUE') ? 'meta-warning' : ''}">${report.metadata.renewalDate}</span></div>
+                        </div>
+                    </div>
+                    <div class="health-score ${report.riskLevel}">
+                        <div class="score-value">${report.score}<span>/100</span></div>
+                        <div class="score-label">${report.riskLabel}</div>
+                    </div>
+                </div>
+                <div class="report-body">
+                    <div class="report-section">
+                        <h4>Risk Signals</h4>
+                        <ul class="signal-list">
+                            ${report.signals.map(s => `<li class="signal-${s.type}">${s.type === 'red' ? '&#128308;' : s.type === 'yellow' ? '&#128992;' : '&#128994;'} ${s.text}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="report-section">
+                        <h4>Validation Checks</h4>
+                        <ul class="validation-list">
+                            ${report.validation.map(v => `<li>&#10003; ${v}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="report-section full-width">
+                        <h4>Recommended Actions</h4>
+                        <ul class="actions-list ${report.riskLevel}">
+                            ${report.actions.map(a => `<li>${a}</li>`).join('')}
+                        </ul>
+                        <div class="routing-tags">
+                            ${report.routing.map(r => `<span class="routing-tag ${report.riskLevel}">${r.text}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-title').textContent = 'Customer Health Assessment Report';
+            document.getElementById('modal-title').style.color = '#fff';
+            document.getElementById('modal-body').innerHTML = modalHTML;
+            document.querySelector('.modal').classList.add('report-modal');
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        // Concept data for modals
+        const conceptData = {
+            trigger: {
+                title: "Trigger",
+                color: "#555",
+                sections: [
+                    { heading: "What It Is", content: "The entry point that initiates the agentic workflow. Can be scheduled (weekly health scan) or event-driven (real-time signal detection)." },
+                    { heading: "Why We Need It", content: "Proactive monitoring catches issues before they escalate. Event-driven triggers enable immediate response to critical changes." },
+                    { heading: "How It Applies", content: "The Customer Health Agent runs weekly to assess all accounts, but can also trigger immediately when critical signals are detected (e.g., account manager departure, payment failure)." }
+                ]
+            },
+            planning: {
+                title: "1. Planning & Decomposition",
+                color: "#4A90D9",
+                sections: [
+                    { heading: "What It Is", content: "The ability of an AI agent to break down complex, high-level goals into smaller, manageable sub-tasks that can be executed systematically." },
+                    { heading: "Why We Need It", content: "Complex tasks like 'assess customer health' are too abstract to execute directly. Decomposition creates a clear roadmap of specific actions, enables parallel execution, and ensures nothing is missed." },
+                    { heading: "How It Applies", content: "The Orchestrator Agent receives 'Assess TechCorp health' and breaks it into 7 concrete sub-tasks: query product metrics, pull support history, check billing, identify stakeholder changes, analyze communications, synthesize into score, and take action." }
+                ]
+            },
+            agents: {
+                title: "2. Multi-Agent Collaboration",
+                color: "#50C878",
+                sections: [
+                    { heading: "What It Is", content: "Multiple specialized AI agents working together, each with domain expertise and dedicated tool access, coordinating to accomplish a larger goal." },
+                    { heading: "Why We Need It", content: "Specialization improves accuracy - each agent is optimized for its domain. Parallel execution dramatically reduces latency. Separation of concerns makes the system more maintainable and debuggable." },
+                    { heading: "How It Applies", content: "5 specialized agents work simultaneously: Product Agent (Amplitude), Support Agent (Zendesk), Billing Agent (Stripe), Contact Agent (Salesforce), and Comms Agent (Slack). Each knows its API deeply and extracts relevant signals." }
+                ]
+            },
+            tools: {
+                title: "3. Tool Selection Decisions",
+                color: "#F5A623",
+                sections: [
+                    { heading: "What It Is", content: "The agent's ability to dynamically choose which tools or APIs to use based on the current context, detected signals, and the specific information needed." },
+                    { heading: "Why We Need It", content: "Not all data sources are relevant for every situation. Intelligent tool selection saves compute, reduces latency, and focuses attention on what matters. It's also how agents adapt to novel situations." },
+                    { heading: "How It Applies", content: "When a usage drop is detected, the agent knows to query Amplitude for product analytics. When tickets are spiking, it prioritizes Zendesk. This conditional logic ensures the right tools are used at the right time." }
+                ]
+            },
+            synthesis: {
+                title: "4. Research & Synthesis",
+                color: "#9B59B6",
+                sections: [
+                    { heading: "What It Is", content: "The process of gathering information from multiple sources, analyzing it for patterns and insights, and combining it into a coherent, actionable output." },
+                    { heading: "Why We Need It", content: "Raw data from individual sources tells an incomplete story. True insight comes from seeing how signals interact - a usage drop + account manager departure + support tickets paints a different picture than any signal alone." },
+                    { heading: "How It Applies", content: "The Synthesis Agent takes signals from all 5 data sources, weighs their relative importance, identifies concerning patterns (account manager left + DAU dropping + pending renewal), and outputs a unified risk score of 34/100." }
+                ]
+            },
+            reflection: {
+                title: "5. Reflection & Self-Critique",
+                color: "#1ABC9C",
+                sections: [
+                    { heading: "What It Is", content: "The agent's ability to evaluate its own work, check for errors or gaps, validate assumptions, and revise outputs before finalizing them." },
+                    { heading: "Why We Need It", content: "AI agents can make mistakes. Self-critique catches data gaps, logical inconsistencies, and contextual errors before they reach humans. It's how we build trust in automated assessments." },
+                    { heading: "How It Applies", content: "Before finalizing the score, the agent asks: Is data complete? (all sources responded) Are there contradictions? (signals align) Is context valid? (not a known migration) Am I confident? (score is reliable). If any check fails, it loops back." }
+                ]
+            },
+            routing: {
+                title: "6. Decision Trees / Routing",
+                color: "#E74C3C",
+                sections: [
+                    { heading: "What It Is", content: "Structured decision logic that routes outputs to different destinations or triggers different actions based on the assessment results." },
+                    { heading: "Why We Need It", content: "Different risk levels require different responses. A high-risk account needs immediate escalation; a healthy account just needs logging. Routing ensures the right people get the right information at the right time." },
+                    { heading: "How It Applies", content: "TechCorp's score of 34 (HIGH RISK) triggers immediate escalation: Slack notification to #cs-critical-accounts, alerts to CSM + Manager + VP, and scheduling of an intervention call. A score of 92 would route to #cs-expansion-opps instead." }
+                ]
+            },
+            refinement: {
+                title: "7. Iterative Refinement",
+                color: "#F1C40F",
+                sections: [
+                    { heading: "What It Is", content: "The system's ability to learn from outcomes over time, adjusting weights, thresholds, and logic based on what actually happened versus what was predicted." },
+                    { heading: "Why We Need It", content: "Initial models are never perfect. By tracking which flagged accounts actually churned and which healthy accounts surprised us, we continuously improve prediction accuracy and reduce false positives/negatives." },
+                    { heading: "How It Applies", content: "After 6 months, the system notices that account manager departures are even more predictive than initially weighted, while some product metrics were false alarms. It adjusts accordingly, and the next assessment cycle is more accurate." }
+                ]
+            }
+        };
+
+        // Highlight concept when legend item is clicked
+        function highlightConcept(conceptNum) {
+            // Remove all highlights
+            document.querySelectorAll('.phase').forEach(p => p.classList.remove('highlighted'));
+            document.querySelectorAll('.legend-item').forEach(l => l.classList.remove('active'));
+
+            // Add highlight to matching phase and legend item
+            const phase = document.querySelector(`.phase[data-concept="${conceptNum}"]`);
+            const legendItem = document.querySelector(`.legend-item[data-concept="${conceptNum}"]`);
+
+            if (phase) {
+                phase.classList.add('highlighted');
+                phase.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            if (legendItem) {
+                legendItem.classList.add('active');
+            }
+
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+                if (phase) phase.classList.remove('highlighted');
+                if (legendItem) legendItem.classList.remove('active');
+            }, 3000);
+        }
+
+        // Show modal with concept details
+        function showModal(conceptKey) {
+            const data = conceptData[conceptKey];
+            if (!data) return;
+
+            document.getElementById('modal-title').textContent = data.title;
+            document.getElementById('modal-title').style.color = data.color;
+
+            let bodyHTML = '';
+            data.sections.forEach(section => {
+                bodyHTML += `
+                    <div class="modal-section">
+                        <h3>${section.heading}</h3>
+                        <p>${section.content}</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('modal-body').innerHTML = bodyHTML;
+            document.querySelector('.modal').classList.remove('report-modal');
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('modal-overlay').classList.remove('active');
+            document.querySelector('.modal').classList.remove('report-modal');
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Position and draw feedback loop arrows with SVG
+        function positionFeedbackLoops() {
+            const workflow = document.querySelector('.workflow');
+            const planningPhase = document.querySelector('.phase-planning');
+            const synthesisPhase = document.querySelector('.phase-synthesis');
+            const reflectionPhase = document.querySelector('.phase-reflection');
+            const refinementPhase = document.querySelector('.phase-refinement');
+            const refinementLoop = document.getElementById('refinement-loop');
+            const reflectionLoop = document.getElementById('reflection-loop');
+            const refinementPath = document.getElementById('refinement-path');
+            const reflectionPath = document.getElementById('reflection-path');
+
+            if (!workflow || !planningPhase || !refinementPhase || !refinementLoop) return;
+
+            const workflowRect = workflow.getBoundingClientRect();
+            const planningRect = planningPhase.getBoundingClientRect();
+            const refinementRect = refinementPhase.getBoundingClientRect();
+            const synthesisRect = synthesisPhase.getBoundingClientRect();
+            const reflectionRect = reflectionPhase.getBoundingClientRect();
+
+            // Refinement -> Planning loop (left side)
+            // Arrow points INTO planning, starts FROM refinement
+            const refLoopTop = planningRect.top - workflowRect.top + 40;
+            const refLoopBottom = refinementRect.top - workflowRect.top + refinementRect.height / 2;
+            const refLoopHeight = refLoopBottom - refLoopTop;
+            const refLoopWidth = 90;
+            const horizontalLength = 55;
+            const arrowHorizontalLength = 55;
+
+            refinementLoop.style.top = refLoopTop + 'px';
+            refinementLoop.style.height = refLoopHeight + 'px';
+            refinementLoop.style.width = refLoopWidth + 'px';
+
+            // SVG: horizontal out from bottom, up vertically, horizontal into top with arrow
+            const refSvg = `
+                <svg width="${refLoopWidth}" height="${refLoopHeight}" viewBox="0 0 ${refLoopWidth} ${refLoopHeight}" overflow="visible">
+                    <defs>
+                        <marker id="arrowhead-gold" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto">
+                            <polygon points="8 3, 0 0, 0 6" fill="#F1C40F"/>
+                        </marker>
+                    </defs>
+                    <!-- Horizontal from bottom section -->
+                    <line x1="${refLoopWidth}" y1="${refLoopHeight}" x2="${refLoopWidth - horizontalLength}" y2="${refLoopHeight}"
+                          stroke="#F1C40F" stroke-width="3" stroke-dasharray="8,4"/>
+                    <!-- Vertical line going up -->
+                    <line x1="${refLoopWidth - horizontalLength}" y1="${refLoopHeight}" x2="${refLoopWidth - horizontalLength}" y2="0"
+                          stroke="#F1C40F" stroke-width="3" stroke-dasharray="8,4"/>
+                    <!-- Horizontal arrow into top section (longer) -->
+                    <line x1="${refLoopWidth - horizontalLength}" y1="0" x2="${refLoopWidth - horizontalLength + arrowHorizontalLength}" y2="0"
+                          stroke="#F1C40F" stroke-width="3" stroke-dasharray="8,4"
+                          marker-end="url(#arrowhead-gold)"/>
+                </svg>
+            `;
+            refinementPath.innerHTML = refSvg;
+
+            // Reflection -> Synthesis loop (right side)
+            // Arrow points INTO synthesis, starts FROM reflection
+            const reflLoopTop = synthesisRect.top - workflowRect.top + 40;
+            const reflLoopBottom = reflectionRect.top - workflowRect.top + reflectionRect.height / 2;
+            const reflLoopHeight = reflLoopBottom - reflLoopTop;
+            const reflLoopWidth = 90;
+
+            reflectionLoop.style.top = reflLoopTop + 'px';
+            reflectionLoop.style.height = reflLoopHeight + 'px';
+            reflectionLoop.style.width = reflLoopWidth + 'px';
+
+            // SVG: horizontal out from bottom, up vertically, horizontal into top with arrow
+            const reflSvg = `
+                <svg width="${reflLoopWidth}" height="${reflLoopHeight}" viewBox="0 0 ${reflLoopWidth} ${reflLoopHeight}" overflow="visible">
+                    <defs>
+                        <marker id="arrowhead-teal" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto">
+                            <polygon points="8 3, 0 0, 0 6" fill="#1ABC9C"/>
+                        </marker>
+                    </defs>
+                    <!-- Horizontal from bottom section -->
+                    <line x1="0" y1="${reflLoopHeight}" x2="${horizontalLength}" y2="${reflLoopHeight}"
+                          stroke="#1ABC9C" stroke-width="3" stroke-dasharray="8,4"/>
+                    <!-- Vertical line going up -->
+                    <line x1="${horizontalLength}" y1="${reflLoopHeight}" x2="${horizontalLength}" y2="0"
+                          stroke="#1ABC9C" stroke-width="3" stroke-dasharray="8,4"/>
+                    <!-- Horizontal arrow into top section (longer) -->
+                    <line x1="${horizontalLength}" y1="0" x2="${horizontalLength - arrowHorizontalLength}" y2="0"
+                          stroke="#1ABC9C" stroke-width="3" stroke-dasharray="8,4"
+                          marker-end="url(#arrowhead-teal)"/>
+                </svg>
+            `;
+            reflectionPath.innerHTML = reflSvg;
+        }
+
+        // Position loops on load and resize
+        window.addEventListener('load', positionFeedbackLoops);
+        window.addEventListener('resize', positionFeedbackLoops);
+        // Also run after a short delay to ensure layout is complete
+        setTimeout(positionFeedbackLoops, 200);
+    </script>
+</body>
+</html>
