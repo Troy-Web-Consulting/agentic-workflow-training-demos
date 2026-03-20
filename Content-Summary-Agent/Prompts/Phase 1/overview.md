@@ -1,43 +1,62 @@
-# Phase 1: Core SDK Patterns (Steps 1-3)
+# Phase 1: Core SDK Patterns — Presenter Guide
 
-Each prompt builds on the previous. Paste them into Claude Code sequentially.
+## What We're Building
 
-**Sample documents are already in `samples/`** — do not recreate them.
+A Content Summary Agent that reads documents and produces structured briefs. Phase 1 introduces three core SDK patterns across three prompts, each evolving the same two files: `content_request.ts` (shared module) and `content_reader.ts` (main agent).
 
 **Key concepts:** `query()`, built-in tools, custom MCP tools, session `resume`
 
+**Sample documents are already in `samples/`** — do not recreate them.
+
 ---
 
-## Step 1 — Single Agent with Read Tool
+## Timing Breakdown
 
-### Prompt
+| Segment | Duration | Cumulative |
+|---------|----------|------------|
+| Intro / context setting | 2-3 min | 2-3 min |
+| Prompt 1: Setup + Reader Agent | 5-6 min | 7-9 min |
+| Prompt 2: Custom MCP Tool | 5-6 min | 12-15 min |
+| Prompt 3: Chained Pipeline | 5-6 min | 17-21 min |
+| Closing Q&A | 3-5 min | 20-26 min |
 
-```
-Create a Content Summary Agent using the Claude Agent SDK (@anthropic-ai/claude-agent-sdk).
+---
 
-Set up the project:
-- Initialize with npm, TypeScript, and tsx for execution
-- Install @anthropic-ai/claude-agent-sdk and zod
-- Create a tsconfig.json targeting ESNext with module NodeNext
+## Intro Talking Points (2-3 min)
 
-Create a shared module `content_request.ts` with:
-- A SYSTEM_PROMPT: "You are a content analysis specialist. Read documents and extract key information clearly and concisely. Use bullet points over paragraphs, skip filler, and aim for under 400 words."
-- A READER_PROMPT: instructions to read a document, identify main topics, decisions, and action items, using the Read tool
-- A `save()` function that logs text and appends to a buffer
-- A `run()` function that wraps an async main, prints a header, and writes the buffer to an Outputs directory
+- The Claude Agent SDK lets you build multi-agent workflows in TypeScript
+- We're going to build a document summarization pipeline live using Claude Code
+- Each prompt introduces 1-2 new concepts — we'll paste them in and watch Claude Code scaffold the code
+- The code evolves in place — each prompt modifies the same files rather than creating new ones
+- By the end of Phase 1, we'll have three chained agents sharing a session
 
-Create `phase1/step1_content_reader.ts`:
-- A single agent that uses query() with the built-in Read tool
-- Accepts a file path as CLI arg, defaulting to `samples/meeting_notes.md`
-- Streams the response and prints each text block
-- Prints cost at the end
-- Uses the shared SYSTEM_PROMPT + READER_PROMPT
-- Set maxTurns to 3
+---
 
-Add npm scripts: "step1": "tsx phase1/step1_content_reader.ts"
-```
+## Prompt 1 — Single Agent with Read Tool
 
-### Expected Output (step1_output.md)
+**File:** `prompt_1_reader_agent.md` (copy/paste entire file into Claude Code)
+
+**Time target:** 5-6 min (including discussion)
+
+**Concepts introduced:**
+- Project scaffolding (npm, TypeScript, tsx)
+- `query()` — the core SDK function for running an agent
+- Built-in `Read` tool — lets the agent read files from disk
+- `maxTurns` — limits how many tool-use loops the agent can take
+
+**What to watch for while Claude Code executes:**
+- It will create `package.json`, `tsconfig.json`, install dependencies
+- `content_request.ts` is the shared module — point out the system prompt and the `run()` wrapper
+- `content_reader.ts` is ~30 lines — highlight how little code is needed for a working agent
+- The `query()` call with `allowedTools: ["Read"]` — this is the key SDK pattern
+
+**Discussion points:**
+- "Notice it only took one `query()` call and one tool to get a useful agent"
+- "The system prompt shapes the output — bullet points, concise, under 400 words"
+- "maxTurns: 3 is a safety net — the agent reads the file and responds in 1-2 turns"
+- Ask: "What other built-in tools might be useful here?" (Write, Bash, etc.)
+
+### Expected Output (Prompt 1)
 
 ```markdown
 ## Summary: Product Team Sync — March 10, 2026
@@ -83,30 +102,33 @@ Add npm scripts: "step1": "tsx phase1/step1_content_reader.ts"
 
 ---
 
-## Step 2 — Add a Custom MCP Tool
+## Prompt 2 — Add a Custom MCP Tool
 
-### Prompt
+**File:** `prompt_2_custom_tool.md` (copy/paste entire file into Claude Code)
 
-```
-Now add a second step that introduces a custom tool.
+**Time target:** 5-6 min (including discussion)
 
-Create `phase1/step2_analyzer.ts`:
-- Same single-agent pattern as Step 1, but now with a custom MCP tool called `extract_structure`
-- Use createSdkMcpServer and tool() from the SDK to define the tool
-- The extract_structure tool:
-  - Accepts a `raw_text` string parameter (validated with zod)
-  - Logs that it was called with the input length
-  - Returns instructions telling the agent to organize the text into three categories: key_points, action_items, and decisions
-  - Returns the raw_text_length and a text_preview (first 500 chars)
-- Wire the tool into an MCP server named "analyzer"
-- Use allowedTools: ["Read", "mcp__analyzer__extract_structure"]
-- Change the system prompt to use ANALYZER_PROMPT (add to content_request.ts): instructions to ALWAYS use extract_structure, read the doc first with Read, then use extract_structure on the raw text
-- Set maxTurns to 5
+**Concepts introduced:**
+- `createSdkMcpServer` + `tool()` — defining custom MCP tools
+- Tool parameters validated with Zod schemas
+- `allowedTools` array — mixing built-in and custom tools
 
-Add npm script: "step2": "tsx phase1/step2_analyzer.ts"
-```
+**What to watch for while Claude Code executes:**
+- It modifies `content_reader.ts` in place — no new file created
+- The `extract_structure` tool definition — show how `tool()` takes a name, description, schema, and handler
+- The tool *returns instructions* to the agent — it's a prompt injection pattern, not a data transform
+- `allowedTools` now includes both `"Read"` and `"mcp__analyzer__extract_structure"`
+- `content_request.ts` gets the new ANALYZER_PROMPT added
 
-### Expected Output (step2_output.md)
+**Discussion points:**
+- "The custom tool doesn't do heavy processing — it guides the agent's output structure"
+- "This is a common pattern: tools as structured prompts, not just API calls"
+- "The `mcp__<server>__<tool>` naming convention is how the SDK namespaces custom tools"
+- Ask: "Where might you use this pattern in your own work?"
+
+> **Running behind?** If you're past 15 min at this point, skip the discussion and move directly to Prompt 3. You can circle back to questions during closing Q&A.
+
+### Expected Output (Prompt 2)
 
 ```markdown
 Here is the structured extraction from the **Product Team Sync — March 10, 2026**:
@@ -150,40 +172,38 @@ Here is the structured extraction from the **Product Team Sync — March 10, 202
 
 ---
 
-## Step 3 — Three Chained Agents
+## Prompt 3 — Three Chained Agents
 
-### Prompt
+**File:** `prompt_3_chained_pipeline.md` (copy/paste entire file into Claude Code)
 
-```
-Now chain three agents together on a single session.
+**Time target:** 5-6 min (including discussion)
 
-Create `phase1/step3_pipeline.ts`:
-- Three query() calls using the `resume` option to share session context
-- Agent 1 (Content Reader): reads the document and summarizes it using READER_PROMPT
-- Agent 2 (Analyzer): resumes Agent 1's session, uses ANALYZER_PROMPT to call extract_structure on the content from above
-- Agent 3 (Brief Writer): resumes the same session, uses WRITER_PROMPT to produce a final professional brief
+**Concepts introduced:**
+- Session `resume` — multiple agents sharing conversation context
+- Agent chaining — output of one agent feeds into the next
+- `processMessage()` helper — reusable message processing pattern
 
-Add WRITER_PROMPT to content_request.ts: "You are a brief writer. Using all the information available in this conversation, produce a clean, professional brief with these sections: ## Summary, ## Key Points, ## Action Items, ## Decisions. Format action items with owner and deadline where available. Keep the entire brief under 500 words."
+**What to watch for while Claude Code executes:**
+- It rewrites `content_reader.ts` again — the single query() becomes three chained query() calls
+- `session_id` captured from Agent 1's response, passed to Agents 2 and 3 via `resume`
+- The `processMessage()` helper gets added to `content_request.ts` — show how it extracts text, logs tool use, and tracks cost
+- WRITER_PROMPT also gets added to `content_request.ts`
+- The final brief combines work from all three agents without re-reading the document
 
-Create a shared processMessage() helper that:
-- Extracts and saves text blocks from assistant messages
-- Logs tool use
-- Prints cost from result messages
-- Returns session_id from any message that has it
+**Discussion points:**
+- "Each agent has a focused role — reader, analyzer, writer. The session ties them together."
+- "Agent 3 never reads the file — it works entirely from the session context built by Agents 1 and 2"
+- "This is the core pattern for multi-agent workflows: chain agents on a shared session"
+- Ask: "What other pipelines could you build with this pattern?"
 
-Capture session_id from Agent 1, pass it via `resume` to Agents 2 and 3.
-
-Add npm script: "step3": "tsx phase1/step3_pipeline.ts"
-```
-
-### Expected Output (step3_output.md)
+### Expected Output (Prompt 3)
 
 The output contains three sections concatenated — the reader summary, the structured extraction, then the final brief:
 
 ```markdown
-[Agent 1 output — same as Step 1 summary]
+[Agent 1 output — same as Prompt 1 summary]
 
-[Agent 2 output — same as Step 2 structured extraction]
+[Agent 2 output — same as Prompt 2 structured extraction]
 
 ---
 
@@ -238,3 +258,27 @@ The product team conducted its regular sync covering Q2 planning, an in-progress
 
 **Next Sync:** Thursday, March 12, 2026 — same time.
 ```
+
+---
+
+## Optional: Prompt 4 — Reusability Demo (only if time permits)
+
+If you finish Prompt 3 with 5+ minutes remaining, demonstrate reusability by re-running the pipeline on a different document:
+
+```
+Run the content reader on samples/project_status.md instead of the default meeting notes.
+```
+
+**Talking point:** "Same pipeline, different document — no code changes needed. This is the payoff of parameterizing the file path as a CLI arg."
+
+---
+
+## Closing Q&A (3-5 min)
+
+Suggested questions to prompt discussion:
+
+- "What surprised you about how little code was needed?"
+- "Where do you see agent chaining being useful in your workflows?"
+- "What would you add to this pipeline? (e.g., Slack notifications, database storage, approval steps)"
+
+**Transition to Phase 2:** "In Phase 2, we'll add streaming output, parallel agent execution, and an orchestrator that coordinates multiple agents dynamically."
