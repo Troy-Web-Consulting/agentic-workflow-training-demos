@@ -27,7 +27,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SLACK_WEBHOOK_URL =
   process.env.SLACK_WEBHOOK_URL ??
-  'https://hooks.slack.com/services/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';
+  'https://hooks.slack.com/services/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';
 
 // -- Custom Tool (same as Phase 1) --------------------------------------------
 
