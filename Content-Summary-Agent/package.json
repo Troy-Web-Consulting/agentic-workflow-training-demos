@@ -4,7 +4,9 @@
   "description": "Content Summary Agent - Training Demo",
   "type": "module",
   "scripts": {
-    "start": "tsx content_reader.ts"
+    "start": "tsx content_reader.ts",
+    "step4": "tsx phase2/step4_with_webhook.ts",
+    "step4b": "tsx phase2/step4b_slack_tool.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.0",
