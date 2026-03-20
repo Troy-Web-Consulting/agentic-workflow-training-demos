@@ -6,6 +6,7 @@
     "step2": "npx tsx phase1/step2_analyzer.ts",
     "step3": "npx tsx phase1/step3_pipeline.ts",
     "step4": "npx tsx phase2/step4_with_webhook.ts",
+    "step4b": "npx tsx phase2/step4b_slack_tool.ts",
     "step5": "npx tsx phase3/step5_sanitization.ts",
     "step6": "npx tsx phase3/step6_error_handling.ts",
     "step7": "npx tsx phase3/step7_logging.ts",

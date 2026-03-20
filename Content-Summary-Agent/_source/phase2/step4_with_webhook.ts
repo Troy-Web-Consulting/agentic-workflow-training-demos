@@ -6,11 +6,14 @@ import {
   query,
   createSdkMcpServer,
   tool,
-} from "@anthropic-ai/claude-agent-sdk";
-import type { SDKAssistantMessage, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import { z } from "zod";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+} from '@anthropic-ai/claude-agent-sdk';
+import type {
+  SDKAssistantMessage,
+  SDKMessage,
+} from '@anthropic-ai/claude-agent-sdk';
+import { z } from 'zod';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   SYSTEM_PROMPT,
   READER_PROMPT,
@@ -18,56 +21,62 @@ import {
   WRITER_PROMPT,
   run,
   save,
-} from "../content_request.js";
+} from '../content_request.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SLACK_WEBHOOK_URL =
   process.env.SLACK_WEBHOOK_URL ??
-  "https://hooks.slack.com/services/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";
+  'https://hooks.slack.com/services/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';
 
 // -- Custom Tool (same as Phase 1) --------------------------------------------
 
 const extractStructure = tool(
-  "extract_structure",
-  "Extract structured information from raw text. Returns key points, action items, and decisions as categorized JSON.",
+  'extract_structure',
+  'Extract structured information from raw text. Returns key points, action items, and decisions as categorized JSON.',
   {
-    raw_text: z.string().describe("The raw document text to analyze and categorize"),
+    raw_text: z
+      .string()
+      .describe('The raw document text to analyze and categorize'),
   },
   async (args) => {
-    console.log("\n  >> extract_structure tool called");
+    console.log('\n  >> extract_structure tool called');
     console.log(`  >> Input length: ${args.raw_text.length} chars\n`);
 
     const result = {
       instructions:
-        "Analyze the provided text and organize it into three categories: " +
-        "key_points (important facts/updates), action_items (tasks with owners/deadlines), " +
-        "and decisions (choices that were made). Return your analysis as structured text.",
+        'Analyze the provided text and organize it into three categories: ' +
+        'key_points (important facts/updates), action_items (tasks with owners/deadlines), ' +
+        'and decisions (choices that were made). Return your analysis as structured text.',
       raw_text_length: args.raw_text.length,
-      text_preview: args.raw_text.slice(0, 500) + "...",
+      text_preview: args.raw_text.slice(0, 500) + '...',
     };
 
     return {
-      content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+      content: [
+        { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+      ],
     };
-  }
+  },
 );
 
 // -- Helper to process messages from a query ----------------------------------
 
 function processMessage(msg: SDKMessage, agentLabel: string): string | null {
-  if (msg.type === "assistant") {
+  if (msg.type === 'assistant') {
     const assistantMsg = msg as SDKAssistantMessage;
     for (const block of assistantMsg.message.content) {
-      if (block.type === "text") {
+      if (block.type === 'text') {
         save(block.text);
-      } else if (block.type === "tool_use") {
+      } else if (block.type === 'tool_use') {
         console.log(`\n  ── Tool: ${block.name}(...) ──\n`);
       }
     }
-  } else if (msg.type === "result" && (msg as any).subtype === "success") {
+  } else if (msg.type === 'result' && (msg as any).subtype === 'success') {
     const result = msg as any;
-    console.log(`\n── ${agentLabel} cost: $${result.total_cost_usd.toFixed(4)} ──`);
+    console.log(
+      `\n── ${agentLabel} cost: $${result.total_cost_usd.toFixed(4)} ──`,
+    );
   }
 
   return (msg as any).session_id ?? null;
@@ -75,93 +84,98 @@ function processMessage(msg: SDKMessage, agentLabel: string): string | null {
 
 // -- Slack Webhook ------------------------------------------------------------
 
+function toSlackMrkdwn(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, '*$1*');
+}
+
 async function sendSlackNotification(summary: string): Promise<void> {
-  console.log("\n[Webhook] Sending Slack notification...");
+  console.log('\n[Webhook] Sending Slack notification...');
 
   const payload = {
-    text: `📝 Content Summary Agent completed: ${summary}`,
+    text: `📝 Content Summary Agent completed: ${toSlackMrkdwn(summary)}`,
   };
 
   const response = await fetch(SLACK_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   if (response.ok) {
-    console.log("[Webhook] Slack notification sent successfully.");
+    console.log('[Webhook] Slack notification sent successfully.');
   } else {
-    console.log(`[Webhook] Slack returned ${response.status}: ${response.statusText}`);
+    console.log(
+      `[Webhook] Slack returned ${response.status}: ${response.statusText}`,
+    );
   }
 }
 
 async function main() {
   const filePath = process.argv[2]
     ? path.resolve(process.argv[2])
-    : path.resolve(__dirname, "../samples/project_status.md");
+    : path.resolve(__dirname, '../samples/project_status.md');
 
   const analyzerServer = createSdkMcpServer({
-    name: "analyzer",
+    name: 'analyzer',
     tools: [extractStructure],
   });
 
   const baseOptions = {
     systemPrompt: SYSTEM_PROMPT,
     mcpServers: { analyzer: analyzerServer },
-    allowedTools: ["Read", "mcp__analyzer__extract_structure"],
+    allowedTools: ['Read', 'mcp__analyzer__extract_structure'],
     env: { ...process.env, CLAUDECODE: undefined },
     maxTurns: 5,
   };
 
-  let sessionId = "";
+  let sessionId = '';
 
   // -- Agent 1: Content Reader ------------------------------------------------
-  console.log("\n>> Agent 1: Reading the document...\n");
+  console.log('\n>> Agent 1: Reading the document...\n');
 
   for await (const msg of query({
     prompt:
-      READER_PROMPT +
-      `\n\nRead and summarize the document at: ${filePath}`,
+      READER_PROMPT + `\n\nRead and summarize the document at: ${filePath}`,
     options: baseOptions,
   })) {
-    const sid = processMessage(msg, "Agent 1");
+    const sid = processMessage(msg, 'Agent 1');
     if (sid) sessionId = sid;
   }
 
   // -- Agent 2: Analyzer (resumes Agent 1's session) --------------------------
-  console.log("\n>> Agent 2: Extracting structure...\n");
+  console.log('\n>> Agent 2: Extracting structure...\n');
 
   for await (const msg of query({
     prompt:
       ANALYZER_PROMPT +
-      "\n\nNow use the extract_structure tool on the document content from above " +
-      "to categorize it into key points, action items, and decisions.",
+      '\n\nNow use the extract_structure tool on the document content from above ' +
+      'to categorize it into key points, action items, and decisions.',
     options: { ...baseOptions, resume: sessionId },
   })) {
-    processMessage(msg, "Agent 2");
+    processMessage(msg, 'Agent 2');
   }
 
   // -- Agent 3: Brief Writer (resumes the same session) -----------------------
-  console.log("\n>> Agent 3: Writing the brief...\n");
+  console.log('\n>> Agent 3: Writing the brief...\n');
 
-  let briefOutput = "";
+  let briefOutput = '';
   for await (const msg of query({
     prompt:
       WRITER_PROMPT +
-      "\n\nUsing all the analysis from above, produce the final brief now.",
+      '\n\nUsing all the analysis from above, produce the final brief now.',
     options: { ...baseOptions, resume: sessionId },
   })) {
-    if (msg.type === "assistant") {
+    if (msg.type === 'assistant') {
       const assistantMsg = msg as SDKAssistantMessage;
       for (const block of assistantMsg.message.content) {
-        if (block.type === "text") {
+        if (block.type === 'text') {
           briefOutput += block.text;
           save(block.text);
-        } else if (block.type === "tool_use") {
+        } else if (block.type === 'tool_use') {
           console.log(`\n  ── Tool: ${block.name}(...) ──\n`);
         }
       }
-    } else if (msg.type === "result" && (msg as any).subtype === "success") {
+    } else if (msg.type === 'result' && (msg as any).subtype === 'success') {
       const result = msg as any;
       console.log(`\n── Agent 3 cost: $${result.total_cost_usd.toFixed(4)} ──`);
     }
@@ -170,21 +184,22 @@ async function main() {
   // -- Webhook: Notify Slack --------------------------------------------------
   // Extract first 2-3 sentences from the brief for the Slack message
   const sentences = briefOutput
-    .replace(/#+\s.*\n/g, "") // strip markdown headers
-    .replace(/\n+/g, " ")     // collapse newlines
+    .replace(/#+\s.*\n/g, '') // strip markdown headers
+    .replace(/\n+/g, ' ') // collapse newlines
     .trim()
     .split(/(?<=[.!?])\s+/)
     .filter((s) => s.length > 10)
     .slice(0, 3)
-    .join(" ");
+    .join(' ');
 
-  const slackSummary = sentences || "Analysis complete — see output for details.";
+  const slackSummary =
+    sentences || 'Analysis complete — see output for details.';
   await sendSlackNotification(slackSummary);
 }
 
 run(
-  "STEP 4: Pipeline with Slack Webhook",
+  'STEP 4: Pipeline with Slack Webhook',
   main,
-  "step4_output.md",
-  "Adding Slack webhook notification after the 3-agent pipeline"
+  'step4_output.md',
+  'Adding Slack webhook notification after the 3-agent pipeline',
 );
