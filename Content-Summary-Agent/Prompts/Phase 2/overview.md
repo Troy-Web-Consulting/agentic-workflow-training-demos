@@ -1,36 +1,51 @@
-# Phase 2: Webhook Notification (Step 4)
+# Phase 2: Webhook Notification — Presenter Guide
 
-Builds on Phase 1. The 3-agent pipeline is already working — now we add a real-world side effect.
+## What We're Building
 
-**Prerequisite:** Phase 1 Steps 1-3 complete.
+Adding a real-world side effect to the pipeline: a Slack webhook notification after the brief is generated. This modifies `workflow.ts` in place — no new orchestration file.
+
+**Prerequisite:** Phase 1 complete (`content_reader.ts`, `content_analyzer.ts`, `workflow.ts` all working).
 
 **Key concept:** Integrating external services (Slack webhook) into an agent pipeline.
 
 ---
 
-## Step 4 — Slack Webhook
+## Timing Breakdown
 
-### Prompt
+| Segment | Duration | Cumulative |
+|---------|----------|------------|
+| Context / recap Phase 1 | 1-2 min | 1-2 min |
+| Prompt 1: Slack Webhook | 5-6 min | 6-8 min |
+| Discussion + Q&A | 3-5 min | 9-13 min |
 
-```
-Add a Slack webhook notification to the pipeline.
+---
 
-Create `phase2/step4_with_webhook.ts`:
-- Same 3-agent pipeline as Step 3 (Reader -> Analyzer -> Writer)
-- After Agent 3 completes, capture the brief output text
-- Add a sendSlackNotification() function that:
-  - POSTs to a Slack webhook URL using native fetch()
-  - Payload format: { text: "Content Summary Agent completed: <first 2-3 sentences>" }
-  - Extract the first 2-3 sentences from the brief by stripping markdown headers, collapsing newlines, splitting on sentence boundaries, and taking the first 3 that are >10 chars
-- Read webhook URL from SLACK_WEBHOOK_URL env var with a default fallback
-- Default input file: samples/project_status.md
+## Prompt 1 — Slack Webhook
 
-Add npm script: "step4": "tsx phase2/step4_with_webhook.ts"
-```
+**File:** `prompt_1_slack_webhook.md` (copy/paste entire file into Claude Code)
 
-### Expected Output (step4_output.md)
+**Time target:** 5-6 min (including discussion)
 
-The 3-agent pipeline output plus a webhook confirmation. The brief covers the Project Phoenix status report:
+**Concepts introduced:**
+- External service integration (Slack webhook via fetch)
+- Environment variable configuration
+- Post-pipeline side effects
+
+**What to watch for while Claude Code executes:**
+- It modifies `workflow.ts` in place — adds `sendSlackNotification()` function and calls it after Agent 3
+- No new file is created — the webhook logic lives inside the existing orchestrator
+- The notification extracts the first 2-3 sentences from the brief for a concise Slack message
+- Default input changes to `samples/project_status.md` to show the pipeline works on different documents
+
+**Discussion points:**
+- "We added a real-world integration with zero changes to the agent logic"
+- "The webhook is a post-pipeline side effect — agents don't know about it"
+- "In production, you'd add retry logic and error handling around the webhook call"
+- Ask: "What other side effects could you add here? (email, database, Jira ticket, etc.)"
+
+### Expected Output
+
+The 3-agent pipeline output plus a webhook confirmation at the end:
 
 ```markdown
 [Agent 1: Reader summary of project_status.md]
@@ -83,3 +98,11 @@ Project Phoenix is **two weeks behind schedule** with a revised launch date of *
 [Webhook] Sending Slack notification...
 [Webhook] Slack notification sent successfully.
 ```
+
+---
+
+## Transition to Phase 3
+
+**Talking point:** "The pipeline works end-to-end now — reads, analyzes, writes, and notifies. But would you ship this to production? What's missing?"
+
+Expected answers: error handling, logging, cost controls, PII protection — which is exactly what Phase 3 covers.
