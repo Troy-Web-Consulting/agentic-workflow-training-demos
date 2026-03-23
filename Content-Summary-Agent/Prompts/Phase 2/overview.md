@@ -16,7 +16,8 @@ Adding a real-world side effect to the pipeline: a Slack webhook notification af
 |---------|----------|------------|
 | Context / recap Phase 1 | 1-2 min | 1-2 min |
 | Prompt 1: Slack Webhook | 5-6 min | 6-8 min |
-| Discussion + Q&A | 3-5 min | 9-13 min |
+| Prompt 2: Slack as Agent Tool (Block Kit) | 5-6 min | 11-14 min |
+| Discussion + Q&A | 3-5 min | 14-19 min |
 
 ---
 
@@ -101,7 +102,16 @@ Project Phoenix is **two weeks behind schedule** with a revised launch date of *
 
 ---
 
-## Step 4b — Slack as an Agent-Callable Tool (Block Kit)
+## Prompt 2 — Slack as an Agent-Callable Tool (Block Kit)
+
+**File:** `prompt_2_slack_tool.md` (copy/paste entire file into Claude Code)
+
+**Time target:** 5-6 min (including discussion)
+
+**Concepts introduced:**
+- Agent-driven side effects (the agent decides to call Slack, not your code)
+- Structured tool input schemas (the agent must organize output to match)
+- Slack Block Kit formatting via MCP tool
 
 ### Teaching Notes
 
