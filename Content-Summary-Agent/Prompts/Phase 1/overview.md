@@ -2,7 +2,7 @@
 
 ## What We're Building
 
-A Content Summary Agent that reads documents and produces structured briefs. Phase 1 introduces three core SDK patterns across three prompts, each evolving the same two files: `content_request.ts` (shared module) and `content_reader.ts` (main agent).
+A Content Summary Agent that reads documents and produces structured briefs. Phase 1 introduces three core SDK patterns across three prompts, building up additively: `content_request.ts` (shared module) evolves with each prompt, while each prompt creates a new focused file.
 
 **Key concepts:** `query()`, built-in tools, custom MCP tools, session `resume`
 
@@ -16,8 +16,8 @@ A Content Summary Agent that reads documents and produces structured briefs. Pha
 |---------|----------|------------|
 | Intro / context setting | 2-3 min | 2-3 min |
 | Prompt 1: Setup + Reader Agent | 5-6 min | 7-9 min |
-| Prompt 2: Custom MCP Tool | 5-6 min | 12-15 min |
-| Prompt 3: Chained Pipeline | 5-6 min | 17-21 min |
+| Prompt 2: Content Analyzer | 5-6 min | 12-15 min |
+| Prompt 3: Agent Workflow | 5-6 min | 17-21 min |
 | Closing Q&A | 3-5 min | 20-26 min |
 
 ---
@@ -27,14 +27,14 @@ A Content Summary Agent that reads documents and produces structured briefs. Pha
 - The Claude Agent SDK lets you build multi-agent workflows in TypeScript
 - We're going to build a document summarization pipeline live using Claude Code
 - Each prompt introduces 1-2 new concepts — we'll paste them in and watch Claude Code scaffold the code
-- The code evolves in place — each prompt modifies the same files rather than creating new ones
+- The code builds additively — each prompt either adds to `content_request.ts` or creates a new focused file
 - By the end of Phase 1, we'll have three chained agents sharing a session
 
 ---
 
 ## Prompt 1 — Single Agent with Read Tool
 
-**File:** `prompt_1_reader_agent.md` (copy/paste entire file into Claude Code)
+**File:** `prompt_1_content_reader.md` (copy/paste entire file into Claude Code)
 
 **Time target:** 5-6 min (including discussion)
 
@@ -102,9 +102,9 @@ A Content Summary Agent that reads documents and produces structured briefs. Pha
 
 ---
 
-## Prompt 2 — Add a Custom MCP Tool
+## Prompt 2 — Content Analyzer (Custom MCP Tool)
 
-**File:** `prompt_2_custom_tool.md` (copy/paste entire file into Claude Code)
+**File:** `prompt_2_content_analyzer.md` (copy/paste entire file into Claude Code)
 
 **Time target:** 5-6 min (including discussion)
 
@@ -114,11 +114,12 @@ A Content Summary Agent that reads documents and produces structured briefs. Pha
 - `allowedTools` array — mixing built-in and custom tools
 
 **What to watch for while Claude Code executes:**
-- It modifies `content_reader.ts` in place — no new file created
+- It creates a **new file** `content_analyzer.ts` — the reader stays untouched
 - The `extract_structure` tool definition — show how `tool()` takes a name, description, schema, and handler
 - The tool *returns instructions* to the agent — it's a prompt injection pattern, not a data transform
 - `allowedTools` now includes both `"Read"` and `"mcp__analyzer__extract_structure"`
 - `content_request.ts` gets the new ANALYZER_PROMPT added
+- The `analyzerServer` is exported — it will be reused in Prompt 3
 
 **Discussion points:**
 - "The custom tool doesn't do heavy processing — it guides the agent's output structure"
@@ -174,7 +175,7 @@ Here is the structured extraction from the **Product Team Sync — March 10, 202
 
 ## Prompt 3 — Three Chained Agents
 
-**File:** `prompt_3_chained_pipeline.md` (copy/paste entire file into Claude Code)
+**File:** `prompt_3_agent_workflow.md` (copy/paste entire file into Claude Code)
 
 **Time target:** 5-6 min (including discussion)
 
@@ -184,7 +185,8 @@ Here is the structured extraction from the **Product Team Sync — March 10, 202
 - `processMessage()` helper — reusable message processing pattern
 
 **What to watch for while Claude Code executes:**
-- It rewrites `content_reader.ts` again — the single query() becomes three chained query() calls
+- It creates a **new file** `workflow.ts` — the orchestrator that chains all three agents
+- `workflow.ts` imports `analyzerServer` from `content_analyzer.ts` — reusing the MCP server from Prompt 2
 - `session_id` captured from Agent 1's response, passed to Agents 2 and 3 via `resume`
 - The `processMessage()` helper gets added to `content_request.ts` — show how it extracts text, logs tool use, and tracks cost
 - WRITER_PROMPT also gets added to `content_request.ts`
@@ -281,4 +283,4 @@ Suggested questions to prompt discussion:
 - "Where do you see agent chaining being useful in your workflows?"
 - "What would you add to this pipeline? (e.g., Slack notifications, database storage, approval steps)"
 
-**Transition to Phase 2:** "In Phase 2, we'll add streaming output, parallel agent execution, and an orchestrator that coordinates multiple agents dynamically."
+**Transition to Phase 2:** "In Phase 2, we'll add a Slack webhook notification — a real-world side effect that shows how to integrate external services into the pipeline."

@@ -1,38 +1,51 @@
-# Phase 2: Slack Integration (Steps 4-4b)
+# Phase 2: Slack Integration — Presenter Guide
 
-Builds on Phase 1. The 3-agent pipeline is already working — now we add a real-world side effect.
+## What We're Building
 
-**Prerequisite:** Phase 1 Steps 1-3 complete.
+Adding a real-world side effect to the pipeline: a Slack webhook notification after the brief is generated. This modifies `workflow.ts` in place — no new orchestration file.
+
+**Prerequisite:** Phase 1 complete (`content_reader.ts`, `content_analyzer.ts`, `workflow.ts` all working).
 
 **Key concepts:** Integrating external services (Slack webhook), code-driven vs agent-driven side effects, Slack Block Kit.
 
 ---
 
-## Step 4 — Slack Webhook
+## Timing Breakdown
 
-### Prompt
+| Segment | Duration | Cumulative |
+|---------|----------|------------|
+| Context / recap Phase 1 | 1-2 min | 1-2 min |
+| Prompt 1: Slack Webhook | 5-6 min | 6-8 min |
+| Discussion + Q&A | 3-5 min | 9-13 min |
 
-```
-Add a Slack webhook notification to the pipeline.
+---
 
-Create `phase2/step4_with_webhook.ts`:
-- Same 3-agent pipeline as Step 3 (Reader -> Analyzer -> Writer)
-- After Agent 3 completes, capture the brief output text
-- Add a toSlackMrkdwn() helper that converts markdown bold (**text**) to Slack mrkdwn bold (*text*) using a regex replace
-- Add a sendSlackNotification() function that:
-  - POSTs to a Slack webhook URL using native fetch()
-  - Runs the summary through toSlackMrkdwn() before sending
-  - Payload format: { text: "Content Summary Agent completed: <first 2-3 sentences>" }
-  - Extract the first 2-3 sentences from the brief by stripping markdown headers, collapsing newlines, splitting on sentence boundaries, and taking the first 3 that are >10 chars
-- Read webhook URL from SLACK_WEBHOOK_URL env var with a default fallback
-- Default input file: samples/project_status.md
+## Prompt 1 — Slack Webhook
 
-Add npm script: "step4": "tsx phase2/step4_with_webhook.ts"
-```
+**File:** `prompt_1_slack_webhook.md` (copy/paste entire file into Claude Code)
 
-### Expected Output (step4_output.md)
+**Time target:** 5-6 min (including discussion)
 
-The 3-agent pipeline output plus a webhook confirmation. The brief covers the Project Phoenix status report:
+**Concepts introduced:**
+- External service integration (Slack webhook via fetch)
+- Environment variable configuration
+- Post-pipeline side effects
+
+**What to watch for while Claude Code executes:**
+- It modifies `workflow.ts` in place — adds `sendSlackNotification()` function and calls it after Agent 3
+- No new file is created — the webhook logic lives inside the existing orchestrator
+- The notification extracts the first 2-3 sentences from the brief for a concise Slack message
+- Default input changes to `samples/project_status.md` to show the pipeline works on different documents
+
+**Discussion points:**
+- "We added a real-world integration with zero changes to the agent logic"
+- "The webhook is a post-pipeline side effect — agents don't know about it"
+- "In production, you'd add retry logic and error handling around the webhook call"
+- Ask: "What other side effects could you add here? (email, database, Jira ticket, etc.)"
+
+### Expected Output
+
+The 3-agent pipeline output plus a webhook confirmation at the end:
 
 ```markdown
 [Agent 1: Reader summary of project_status.md]
@@ -89,29 +102,6 @@ Project Phoenix is **two weeks behind schedule** with a revised launch date of *
 ---
 
 ## Step 4b — Slack as an Agent-Callable Tool (Block Kit)
-
-### Prompt
-
-```
-Refactor the Slack integration so the agent itself posts to Slack using a tool.
-
-Create `phase2/step4b_slack_tool.ts`:
-- Same 3-agent pipeline as Step 4 (Reader -> Analyzer -> Writer)
-- Replace the post-pipeline sendSlackNotification() function with a NEW MCP tool called `send_slack_summary`
-- The send_slack_summary tool:
-  - Accepts: title (string), summary (string), key_points (array of strings), action_items (array of strings) — all validated with zod
-  - Logs that it was called with the title and counts of key_points/action_items
-  - Builds a Slack Block Kit payload with: a header block (title), a section block (summary), a divider, a section with key points as bullet list, a divider, a section with action items as bullet list, a divider, and a context block with "Posted by Content Summary Agent" and the current timestamp
-  - Also includes a top-level `text` field as a notification fallback
-  - POSTs to the SLACK_WEBHOOK_URL using native fetch()
-  - Returns a success or failure message as tool content
-- Put BOTH extract_structure and send_slack_summary on a single MCP server named "tools"
-- Add send_slack_summary to allowedTools: "mcp__tools__send_slack_summary"
-- Update the Agent 3 prompt to instruct it: after writing the brief, use send_slack_summary to post a formatted summary with the title, a 2-3 sentence summary, the most important key points, and all action items
-- Read webhook URL from SLACK_WEBHOOK_URL env var with the same default fallback as Step 4
-
-Add npm script: "step4b": "tsx phase2/step4b_slack_tool.ts"
-```
 
 ### Teaching Notes
 
@@ -196,3 +186,11 @@ The Slack channel shows a rich Block Kit message with:
 - **Key Points section**: Bulleted list
 - **Action Items section**: Bulleted list
 - **Context footer**: "Posted by Content Summary Agent | [timestamp]"
+
+---
+
+## Transition to Phase 3
+
+**Talking point:** "The pipeline works end-to-end now — reads, analyzes, writes, and notifies. But would you ship this to production? What's missing?"
+
+Expected answers: error handling, logging, cost controls, PII protection — which is exactly what Phase 3 covers.

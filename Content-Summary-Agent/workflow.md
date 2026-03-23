@@ -10,13 +10,11 @@ Build a Content Summary Agent that reads documents and produces structured brief
 
 | Step | Concept | Prompt File | Status |
 |------|---------|-------------|--------|
-| 1 | Single agent + Read tool | `Prompts/Phase 1/prompt_1_reader_agent.md` | Not started |
-| 2 | Custom MCP tool (`extract_structure`) | `Prompts/Phase 1/prompt_2_custom_tool.md` | Not started |
-| 3 | Chained 3-agent pipeline with `resume` | `Prompts/Phase 1/prompt_3_chained_pipeline.md` | Not started |
+| 1 | Single agent + Read tool | `Prompts/Phase 1/prompt_1_content_reader.md` | Not started |
+| 2 | Custom MCP tool (`extract_structure`) | `Prompts/Phase 1/prompt_2_content_analyzer.md` | Not started |
+| 3 | Chained 3-agent pipeline with `resume` | `Prompts/Phase 1/prompt_3_agent_workflow.md` | Not started |
 
-**Files created/modified:** `content_request.ts`, `content_reader.ts`
-
-**Run:** `npm start` (or `npm start -- samples/project_status.md`)
+**Presenter guide:** `Prompts/Phase 1/overview.md`
 
 ### Key Talking Points
 - `query()` is the core SDK function — one call per agent
@@ -32,12 +30,10 @@ Add a real-world side effect: posting results to Slack.
 
 | Step | Concept | Prompt File | Status |
 |------|---------|-------------|--------|
-| 4 | Slack webhook (code-driven) | `Prompts/prompts_phase_2.md` — Step 4 | Not started |
-| 4b | Slack as agent-callable tool (Block Kit) | `Prompts/prompts_phase_2.md` — Step 4b | Not started |
+| 4 | Slack webhook (code-driven) | `Prompts/Phase 2/prompt_1_slack_webhook.md` | Not started |
+| 4b | Slack as agent-callable tool (Block Kit) | _live prompt during presentation_ | Not started |
 
-**Files created:** `phase2/step4_with_webhook.ts`, `phase2/step4b_slack_tool.ts`
-
-**Run:** `npm run step4` / `npm run step4b`
+**Presenter guide:** `Prompts/Phase 2/overview.md`
 
 ### Key Talking Points
 - **Step 4 vs 4b shift:** In Step 4 your code calls Slack after the pipeline. In Step 4b the agent has a tool and decides to call Slack itself.
@@ -53,10 +49,10 @@ Add operational concerns one layer at a time.
 
 | Step | Concept | Prompt File | Status |
 |------|---------|-------------|--------|
-| 5 | PII sanitization | `Prompts/prompts_phase_3.md` — Step 5 | Not started |
-| 6 | Error handling + graceful degradation | `Prompts/prompts_phase_3.md` — Step 6 | Not started |
-| 7 | Structured logging | `Prompts/prompts_phase_3.md` — Step 7 | Not started |
-| 8 | Cost/budget controls | `Prompts/prompts_phase_3.md` — Step 8 | Not started |
+| 5 | PII sanitization | `Prompts/Phase 3/prompt_1_pii_sanitizer.md` | Not started |
+| 6 | Budget/cost controls | `Prompts/Phase 3/prompt_2_budget_controls.md` | Not started |
+
+**Presenter guide:** `Prompts/Phase 3/overview.md`
 
 ---
 
