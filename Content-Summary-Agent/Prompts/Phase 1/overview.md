@@ -6,7 +6,9 @@ A Content Summary Agent that reads documents and produces structured briefs. Pha
 
 **Key concepts:** `query()`, built-in tools, custom MCP tools, session `resume`
 
-**Sample documents are already in `samples/`** — do not recreate them.
+**Sample documents are already in `Samples/`** — do not recreate them.
+
+> **Attendee walkthrough:** For the step-by-step guide attendees follow along with, see [`walkthrough.md`](./walkthrough.md).
 
 ---
 
@@ -25,10 +27,12 @@ A Content Summary Agent that reads documents and produces structured briefs. Pha
 ## Intro Talking Points (2-3 min)
 
 - The Claude Agent SDK lets you build multi-agent workflows in TypeScript
-- We're going to build a document summarization pipeline live using Claude Code
-- Each prompt introduces 1-2 new concepts — we'll paste them in and watch Claude Code scaffold the code
-- The code builds additively — each prompt either adds to `content_request.ts` or creates a new focused file
-- By the end of Phase 1, we'll have three chained agents sharing a session
+- We're going to build a document summarization pipeline **live** using Claude Code — no hand-written code
+- This is a mixed audience — if something is unfamiliar, that's expected. The prompts do the heavy lifting.
+- Each prompt introduces 1-2 new concepts — paste them into Claude Code, watch it scaffold
+- Code builds additively: `content_request.ts` (shared module) grows; each prompt also creates a new file
+- By the end of Phase 1: three chained agents sharing a session
+- Attendees should have the repo cloned and follow along with `walkthrough.md`
 
 ---
 
