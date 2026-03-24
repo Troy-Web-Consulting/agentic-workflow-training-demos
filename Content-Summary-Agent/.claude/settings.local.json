@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Bash(npm i:*)"
+      "Bash(npm i:*)",
+      "Bash(npm init:*)",
+      "Bash(git add:*)"
     ]
   }
 }
