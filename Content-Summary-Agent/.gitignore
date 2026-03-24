@@ -1,0 +1,3 @@
+node_modules/
+Outputs/
+.claude/settings.local.json
