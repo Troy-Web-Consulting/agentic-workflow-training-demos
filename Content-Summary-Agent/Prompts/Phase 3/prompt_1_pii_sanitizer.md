@@ -12,6 +12,7 @@ Regex patterns:
 
 Modify `workflow.ts` to integrate sanitization:
 - PRE-PROCESSING: Before agents run, read the file with fs, call detectPII() to log findings, then sanitizeInput() the content
+- Save the sanitized content to `samples/customer_feedback_report_redacted.md` using fs.writeFileSync()
 - Pass the sanitized content directly in Agent 1's prompt (instead of having the agent use Read)
 - POST-PROCESSING: After Agent 3, call detectPII() on the output, and if any PII leaked through, call sanitizeOutput()
 - Save the redacted output as `samples/reacted_report.md` using fs.writeFileSync()
