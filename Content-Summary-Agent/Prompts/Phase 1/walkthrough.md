@@ -164,3 +164,9 @@ npm start -- Samples/customer_feedback_report.md
 | `allowedTools` | Prompts 1-3 | Controls which tools each agent can access |
 | Session `resume` | Prompt 3 | Multiple agents share conversation context |
 | Agent chaining | Prompt 3 | Output of one agent feeds into the next |
+
+---
+
+## Check Your Outputs
+
+After running each step, take a look at what was produced. The `run()` helper writes agent output to the `Outputs/` directory — open the files there to see the final results alongside what was printed to the console. Comparing outputs across steps shows how each agent layer adds structure and polish to the same source document.
