@@ -3,9 +3,9 @@ import { z } from "zod";
 import path from "path";
 import { SYSTEM_PROMPT, ANALYZER_PROMPT, save, run } from "./content_request.js";
 
-export function createAnalyzerServer() {
+export function createToolsServer() {
   return createSdkMcpServer({
-    name: "analyzer",
+    name: "tools",
     tools: [
       tool(
         "extract_structure",
@@ -29,6 +29,93 @@ export function createAnalyzerServer() {
           };
         }
       ),
+      tool(
+        "send_slack_summary",
+        "Post a formatted summary to Slack via webhook. Use this after writing a brief to notify the team.",
+        {
+          title: z.string(),
+          summary: z.string(),
+          key_points: z.array(z.string()),
+          action_items: z.array(z.string()),
+        },
+        async ({ title, summary, key_points, action_items }) => {
+          console.log(
+            `\n[send_slack_summary] Called with title="${title}", ${key_points.length} key points, ${action_items.length} action items\n`
+          );
+
+          const webhookUrl =
+            process.env.SLACK_WEBHOOK_URL ||
+            "https://hooks.slack.com/services/YOUR/WEBHOOK/URL";
+
+          const blocks = [
+            { type: "header", text: { type: "plain_text", text: title } },
+            { type: "section", text: { type: "mrkdwn", text: summary } },
+            { type: "divider" },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*Key Points*\n${key_points.map((p) => `• ${p}`).join("\n")}`,
+              },
+            },
+            { type: "divider" },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*Action Items*\n${action_items.map((a) => `• ${a}`).join("\n")}`,
+              },
+            },
+            { type: "divider" },
+            {
+              type: "context",
+              elements: [
+                {
+                  type: "mrkdwn",
+                  text: `Posted by Content Summary Agent | ${new Date().toISOString()}`,
+                },
+              ],
+            },
+          ];
+
+          const payload = {
+            text: `${title}: ${summary}`,
+            blocks,
+          };
+
+          try {
+            const res = await fetch(webhookUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            const status = res.ok ? "sent" : `failed (${res.status})`;
+            console.log(`\nSlack notification: ${status}`);
+
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: res.ok
+                    ? "Slack summary posted successfully."
+                    : `Slack post failed with status ${res.status}.`,
+                },
+              ],
+            };
+          } catch (err) {
+            console.error("\nSlack notification error:", err);
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Slack post failed: ${err}`,
+                },
+              ],
+            };
+          }
+        }
+      ),
     ],
   });
 }
@@ -42,8 +129,8 @@ run("Content Analyzer", async () => {
     prompt: ANALYZER_PROMPT(filePath),
     options: {
       systemPrompt: SYSTEM_PROMPT,
-      allowedTools: ["Read", "mcp__analyzer__extract_structure"],
-      mcpServers: { analyzer: createAnalyzerServer() },
+      allowedTools: ["Read", "mcp__tools__extract_structure"],
+      mcpServers: { tools: createToolsServer() },
       maxTurns: 5,
     },
   })) {

@@ -1,5 +1,5 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import path from "path";
+import { query } from '@anthropic-ai/claude-agent-sdk';
+import path from 'path';
 import {
   SYSTEM_PROMPT,
   READER_PROMPT,
@@ -8,22 +8,24 @@ import {
   processMessage,
   save,
   run,
-} from "./content_request.js";
-import { createAnalyzerServer } from "./content_analyzer.js";
+} from './content_request.js';
+import { createToolsServer } from './content_analyzer.js';
 
-const filePath = process.argv[2] || path.join("Samples", "meeting_notes.md");
+const filePath = process.argv[2] || path.join('samples', 'project_status.md');
 
-run("Content Summary Workflow", async () => {
+const toolsServer = createToolsServer();
+
+run('Content Summary Workflow', async () => {
   let sessionId: string | undefined;
 
   // --- Agent 1: Content Reader ---
-  save("## Agent 1: Content Reader\n");
+  save('## Agent 1: Content Reader\n');
 
   for await (const message of query({
     prompt: READER_PROMPT(filePath),
     options: {
       systemPrompt: SYSTEM_PROMPT,
-      allowedTools: ["Read"],
+      allowedTools: ['Read'],
       maxTurns: 3,
     },
   })) {
@@ -32,20 +34,20 @@ run("Content Summary Workflow", async () => {
   }
 
   if (!sessionId) {
-    throw new Error("Failed to get session_id from Agent 1");
+    throw new Error('Failed to get session_id from Agent 1');
   }
 
   console.log(`\nSession: ${sessionId}\n`);
 
   // --- Agent 2: Analyzer ---
-  save("\n## Agent 2: Analyzer\n");
+  save('\n## Agent 2: Analyzer\n');
 
   for await (const message of query({
     prompt: ANALYZER_PROMPT(filePath),
     options: {
       systemPrompt: SYSTEM_PROMPT,
-      allowedTools: ["Read", "mcp__analyzer__extract_structure"],
-      mcpServers: { analyzer: createAnalyzerServer() },
+      allowedTools: ['Read', 'mcp__tools__extract_structure'],
+      mcpServers: { tools: toolsServer },
       maxTurns: 5,
       resume: sessionId,
     },
@@ -54,14 +56,15 @@ run("Content Summary Workflow", async () => {
   }
 
   // --- Agent 3: Brief Writer ---
-  save("\n## Agent 3: Brief Writer\n");
+  save('\n## Agent 3: Brief Writer\n');
 
   for await (const message of query({
     prompt: WRITER_PROMPT,
     options: {
       systemPrompt: SYSTEM_PROMPT,
-      allowedTools: [],
-      maxTurns: 1,
+      allowedTools: ['mcp__tools__send_slack_summary'],
+      mcpServers: { tools: toolsServer },
+      maxTurns: 3,
       resume: sessionId,
     },
   })) {

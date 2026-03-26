@@ -21,7 +21,7 @@ export const ANALYZER_PROMPT = (filePath: string) =>
 Do NOT skip the extract_structure tool. Always call it after reading the document.`;
 
 export const WRITER_PROMPT =
-  "You are a brief writer. Using all the information available in this conversation, produce a clean, professional brief with these sections: ## Summary, ## Key Points, ## Action Items, ## Decisions. Format action items with owner and deadline where available. Keep the entire brief under 500 words.";
+  "You are a brief writer. Using all the information available in this conversation, produce a clean, professional brief with these sections: ## Summary, ## Key Points, ## Action Items, ## Decisions. Format action items with owner and deadline where available. Keep the entire brief under 500 words.\n\nAfter writing the brief, use the send_slack_summary tool to post a formatted summary to Slack. Provide: a concise title for the document, a 2-3 sentence summary, the most important key points as an array of strings, and all action items as an array of strings.";
 
 const buffer: string[] = [];
 
